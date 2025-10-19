@@ -1,0 +1,50 @@
+import React from 'react';
+import { Text as RNText, TextProps as RNTextProps, StyleSheet } from 'react-native';
+import { theme } from '../lib/theme';
+
+type TextVariant = 'xs' | 'sm' | 'md' | 'lg';
+
+type Props = RNTextProps & {
+  variant?: TextVariant;
+  weight?: 'regular' | 'medium' | 'bold';
+};
+
+export const Text = ({ children, variant = 'sm', weight = 'regular', style, ...rest }: Props) => {
+  return (
+    <RNText
+      accessibilityRole={rest.accessibilityRole}
+      maxFontSizeMultiplier={1.3}
+      style={[styles.base, styles[variant], styles[weight], style]}
+      {...rest}
+    >
+      {children}
+    </RNText>
+  );
+};
+
+const styles = StyleSheet.create({
+  base: {
+    color: theme.colors.textPrimary,
+  },
+  xs: {
+    fontSize: theme.typography.xs,
+  },
+  sm: {
+    fontSize: theme.typography.sm,
+  },
+  md: {
+    fontSize: theme.typography.md,
+  },
+  lg: {
+    fontSize: theme.typography.lg,
+  },
+  regular: {
+    fontWeight: '400',
+  },
+  medium: {
+    fontWeight: '600',
+  },
+  bold: {
+    fontWeight: '700',
+  },
+});
