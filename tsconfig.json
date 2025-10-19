@@ -1,16 +1,12 @@
 {
+  "extends": "expo/tsconfig.base",
   "compilerOptions": {
-    "allowSyntheticDefaultImports": true,
-    "esModuleInterop": true,
-    "jsx": "react-native",
-    "lib": ["dom", "dom.iterable", "esnext"],
-    "moduleResolution": "node",
     "noEmit": true,
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "strict": false,
-    "target": "esnext",
-    "types": ["react", "react-native", "react-native-gesture-handler"]
-  },
-  "extends": "expo/tsconfig.base"
+    "jsx": "react-jsx",
+    "moduleResolution": "bundler",
+    "target": "ESNext"
+  }
 }
