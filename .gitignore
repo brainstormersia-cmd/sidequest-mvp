@@ -1,0 +1,10 @@
+node_modules
+.expo
+.expo-shared
+web-build
+npm-debug.*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+.DS_Store
+dist/
