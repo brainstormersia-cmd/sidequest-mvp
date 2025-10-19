@@ -1,4 +1,4 @@
-export const useOfflineFallback = false;
+export const useOfflineFallback = true;
 
 export const features = {
   useOfflineFallback,
