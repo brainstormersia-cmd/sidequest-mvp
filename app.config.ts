@@ -14,9 +14,9 @@ export default ({ config }: ConfigContext): ExpoConfig => {
   return {
     ...config,
     name: 'Sidequest MVP',
-    slug: 'sidequest-mvp',
+    slug: 'sonom', // allinea allo slug del progetto Expo creato
     version: '1.0.0',
-    owner: undefined,
+    owner: 'horizon7', // <-- IMPORTANTISSIMO
     orientation: 'portrait',
     scheme: 'sidequestmvp',
     userInterfaceStyle: 'automatic',
@@ -31,7 +31,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       bundleIdentifier: 'com.sidequest.mvp',
     },
     android: {
-      package: 'com.sidequest.mvp',
+      package: 'com.sidequest.mvp', // tienilo così SOLO se non hai già pubblicato su Play; dopo la prima pubblicazione non si cambia più
       adaptiveIcon: {
         foregroundImage: './assets/adaptive-icon.png',
         backgroundColor: '#0B0B0F',
@@ -49,7 +49,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       ...envExtra,
       ...(config.extra as AppExtra),
       eas: {
-        projectId: '00000000-0000-0000-0000-000000000000',
+        projectId: '4845c73f-ca62-41d3-821b-08a69b0d921b', // <-- QUELLO GIUSTO
       },
     },
   };
