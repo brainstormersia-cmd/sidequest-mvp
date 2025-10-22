@@ -1,13 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  Animated,
-  Easing,
-  Platform,
-  Pressable,
-  SafeAreaView,
-  StyleSheet,
-  View,
-} from 'react-native';
+import { Animated, Easing, Platform, Pressable, SafeAreaView, StyleSheet, View } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../routes/RootNavigator';
 import { Text } from '../../shared/ui/Text';
@@ -22,6 +14,7 @@ import { hasSupabase } from '../../shared/lib/supabase';
 import { reduceMotionEnabled } from '../../shared/lib/a11y';
 import { triggerSelectionHaptic, triggerSuccessHaptic } from '../../shared/lib/haptics';
 import { StatusBar } from 'expo-status-bar';
+import { useRole } from '../../shared/state/roleStore';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Onboarding'> & {
   onFinished?: () => void;
@@ -34,16 +27,19 @@ type RoleContent = {
   label: string;
   title: string;
   subtitle: string;
-  badge: string;
-  icon: string;
+  badges: string[];
 };
 
 const ACCENT = '#4F8BFF';
-const SURFACE = '#13151A';
-const BACKGROUND = '#0B0C0E';
-const TEXT_PRIMARY = '#FFFFFF';
-const TEXT_SECONDARY = '#A7AAB0';
-const STROKE = '#26282C';
+const BACKGROUND = '#F5F7FB';
+const SURFACE = '#FFFFFF';
+const STROKE = '#D5DCEE';
+const TEXT_PRIMARY = '#0B0C0E';
+const TEXT_SECONDARY = '#4A4E59';
+const PLACEHOLDER_BG = '#EEF3FF';
+const BADGE_BG = 'rgba(79, 139, 255, 0.12)';
+const BADGE_BORDER = 'rgba(79, 139, 255, 0.3)';
+const BADGE_TEXT = '#254077';
 
 const ROLES: RoleContent[] = [
   {
@@ -51,16 +47,14 @@ const ROLES: RoleContent[] = [
     label: 'Giver',
     title: 'Ho bisogno di una mano',
     subtitle: 'Pubblica una missione. Paga in escrow. Zero pensieri.',
-    badge: 'Trend',
-    icon: '🆘',
+    badges: ['Escrow', 'Brief rapido'],
   },
   {
     key: 'doer',
     label: 'Doer',
     title: 'Voglio dare una mano (e guadagnare)',
     subtitle: 'Trova missioni vicino a te e incassa in sicurezza.',
-    badge: 'Più scelto',
-    icon: '⚡',
+    badges: ['Vicino a te', 'Pagamento sicuro'],
   },
 ];
 
@@ -126,25 +120,33 @@ const RoleCard: React.FC<RoleCardProps> = ({ content, selected, onPress, reduceM
         style={styles.cardPressable}
       >
         <View style={styles.cardHeader}>
-          <View style={styles.iconBubble} accessible={false} importantForAccessibility="no">
-            <Text variant="lg" style={styles.iconText}>
-              {content.icon}
-            </Text>
-          </View>
-          <View style={styles.badge} accessible={false} importantForAccessibility="no-hide-descendants">
-            <Text variant="xs" weight="medium" style={styles.badgeText}>
-              {content.badge}
-            </Text>
-          </View>
+          <View style={styles.placeholderShape} accessible={false} importantForAccessibility="no" />
         </View>
         <Spacer size="sm" />
-        <Text variant="md" weight="bold" style={styles.cardTitle}>
+        <Text
+          variant="md"
+          weight="bold"
+          style={[
+            styles.cardTitle,
+            content.key === 'giver' ? styles.cardTitleGiver : styles.cardTitleDoer,
+            selected && content.key === 'giver' ? styles.cardTitleGiverSelected : null,
+          ]}
+        >
           {content.title}
         </Text>
         <Spacer size="xs" />
         <Text variant="sm" style={styles.cardSubtitle}>
           {content.subtitle}
         </Text>
+        <View style={styles.badgeRow}>
+          {content.badges.map((badge) => (
+            <View key={badge} style={styles.badgeChip} accessible={false} importantForAccessibility="no">
+              <Text variant="xs" weight="medium" style={styles.badgeText}>
+                {badge}
+              </Text>
+            </View>
+          ))}
+        </View>
       </Pressable>
     </Animated.View>
   );
@@ -156,6 +158,7 @@ export const OnboardingScreen: React.FC<Props> = ({ navigation, onFinished }) =>
   const [showRitual, setShowRitual] = useState(false);
   const [reduceMotion, setReduceMotion] = useState(false);
   const ritualProgress = useRef(new Animated.Value(0)).current;
+  const { setRole } = useRole();
 
   useEffect(() => {
     let active = true;
@@ -218,6 +221,7 @@ export const OnboardingScreen: React.FC<Props> = ({ navigation, onFinished }) =>
       if (!reduceMotion) {
         setShowRitual(false);
       }
+      setRole(selectedRole);
       onFinished?.();
       navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
     } catch (error) {
@@ -227,7 +231,7 @@ export const OnboardingScreen: React.FC<Props> = ({ navigation, onFinished }) =>
       }
       setLoading(false);
     }
-  }, [loading, navigation, onFinished, playRitual, reduceMotion, selectedRole]);
+  }, [loading, navigation, onFinished, playRitual, reduceMotion, selectedRole, setRole]);
 
   const ctaLabel = useMemo(() => {
     if (!selectedRole) {
@@ -256,14 +260,8 @@ export const OnboardingScreen: React.FC<Props> = ({ navigation, onFinished }) =>
 
   return (
     <SafeAreaView style={styles.safe}>
-      <StatusBar style="light" />
+      <StatusBar style="dark" />
       <View style={styles.container}>
-        <View style={styles.header}>
-          <Text variant="sm" weight="bold" style={styles.logo}>
-            SideQuest
-          </Text>
-        </View>
-
         <View style={styles.content}>
           <Text variant="lg" weight="bold" style={styles.title} accessibilityRole="header">
             Cosa vuoi fare ora?
@@ -292,10 +290,9 @@ export const OnboardingScreen: React.FC<Props> = ({ navigation, onFinished }) =>
             onPress={handleContinue}
             disabled={!selectedRole || loading}
             loading={loading}
-            style={styles.ctaButton}
           />
           <Text variant="xs" style={styles.footerHint}>
-            Potrai cambiarlo in qualsiasi momento dalle impostazioni del profilo.
+            Potrai cambiare modalità in qualsiasi momento.
           </Text>
         </View>
       </View>
@@ -339,24 +336,16 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: 24,
-    paddingTop: 16,
+    paddingTop: 32,
     paddingBottom: 24,
     justifyContent: 'space-between',
-  },
-  header: {
-    alignItems: 'center',
-  },
-  logo: {
-    color: TEXT_SECONDARY,
-    letterSpacing: 2,
   },
   content: {
     flex: 1,
   },
   title: {
     color: TEXT_PRIMARY,
-    fontSize: 24,
-    lineHeight: 30,
+    lineHeight: 32,
   },
   subtitle: {
     color: TEXT_SECONDARY,
@@ -371,13 +360,13 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     borderWidth: 1,
     overflow: 'hidden',
+    borderColor: STROKE,
   },
   cardDefault: {
-    borderColor: 'transparent',
     ...Platform.select({
       ios: {
-        shadowColor: '#000',
-        shadowOpacity: 0.35,
+        shadowColor: 'rgba(28, 66, 140, 0.16)',
+        shadowOpacity: 1,
         shadowRadius: 12,
         shadowOffset: { width: 0, height: 6 },
       },
@@ -390,9 +379,9 @@ const styles = StyleSheet.create({
     borderColor: ACCENT,
     ...Platform.select({
       ios: {
-        shadowColor: ACCENT,
-        shadowOpacity: 0.45,
-        shadowRadius: 16,
+        shadowColor: 'rgba(79, 139, 255, 0.32)',
+        shadowOpacity: 1,
+        shadowRadius: 18,
         shadowOffset: { width: 0, height: 8 },
       },
       android: {
@@ -418,45 +407,56 @@ const styles = StyleSheet.create({
     minHeight: 168,
   },
   cardHeader: {
-    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
   },
-  iconBubble: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#1B1D24',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  iconText: {
-    color: TEXT_PRIMARY,
-  },
-  badge: {
-    borderRadius: 999,
-    backgroundColor: STROKE,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-  },
-  badgeText: {
-    color: TEXT_SECONDARY,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+  placeholderShape: {
+    width: 56,
+    height: 56,
+    borderRadius: 18,
+    backgroundColor: PLACEHOLDER_BG,
+    borderWidth: 1,
+    borderColor: STROKE,
   },
   cardTitle: {
     color: TEXT_PRIMARY,
     lineHeight: 24,
   },
+  cardTitleGiver: {
+    fontSize: 18,
+  },
+  cardTitleGiverSelected: {
+    fontWeight: '800',
+  },
+  cardTitleDoer: {
+    fontSize: 16,
+  },
   cardSubtitle: {
     color: TEXT_SECONDARY,
     lineHeight: 20,
   },
+  badgeRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: 16,
+    marginHorizontal: -4,
+  },
+  badgeChip: {
+    borderRadius: 999,
+    backgroundColor: BADGE_BG,
+    borderWidth: 1,
+    borderColor: BADGE_BORDER,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    marginHorizontal: 4,
+    marginBottom: 8,
+  },
+  badgeText: {
+    color: BADGE_TEXT,
+    letterSpacing: 0.2,
+  },
   footer: {
     alignItems: 'center',
-  },
-  ctaButton: {
-    backgroundColor: ACCENT,
   },
   footerHint: {
     color: TEXT_SECONDARY,
@@ -468,7 +468,7 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(11, 12, 14, 0.55)',
+    backgroundColor: 'rgba(245, 247, 251, 0.7)',
   },
   ritualCircle: {
     width: 240,

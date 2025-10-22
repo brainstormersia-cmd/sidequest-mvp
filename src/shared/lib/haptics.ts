@@ -6,7 +6,7 @@ export const triggerSelectionHaptic = async () => {
     return;
   }
   try {
-    await Haptics.selectionAsync();
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
   } catch (error) {
     console.warn('Impossibile riprodurre l\'haptic feedback', error);
   }

@@ -5,6 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import { RootNavigator } from './routes/RootNavigator';
 import { ModalSheetProvider } from './routes/ModalSheetProvider';
 import { theme } from './shared/lib/theme';
+import { RoleProvider } from './shared/state/roleStore';
 
 const navigationTheme: Theme = {
   ...DefaultTheme,
@@ -23,10 +24,12 @@ export const App = () => (
   <SafeAreaProvider>
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <NavigationContainer theme={navigationTheme}>
-        <ModalSheetProvider>
-          <StatusBar style="light" />
-          <RootNavigator />
-        </ModalSheetProvider>
+        <RoleProvider>
+          <ModalSheetProvider>
+            <StatusBar style="dark" />
+            <RootNavigator />
+          </ModalSheetProvider>
+        </RoleProvider>
       </NavigationContainer>
     </SafeAreaView>
   </SafeAreaProvider>

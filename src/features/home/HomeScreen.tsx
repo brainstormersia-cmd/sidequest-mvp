@@ -1,125 +1,206 @@
-import React, { useState } from 'react';
-import { Pressable, SafeAreaView, StyleSheet, View } from 'react-native';
+import React, { useMemo } from 'react';
+import { Pressable, SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { strings } from '../../config/strings';
+import { StatusBar } from 'expo-status-bar';
 import { RootStackParamList } from '../../routes/RootNavigator';
 import { Text } from '../../shared/ui/Text';
-import { TouchableCard } from '../../shared/ui/Card';
-import { Button } from '../../shared/ui/Button';
+import { Spacer } from '../../shared/ui/Spacer';
 import { theme } from '../../shared/lib/theme';
-import { requestLocationPermission } from '../../shared/lib/permissions';
 import { useModalSheet } from '../../routes/ModalSheetProvider';
 import { CreateMissionSheet } from '../create/CreateMissionSheet';
+import { useRole, Role } from '../../shared/state/roleStore';
+import { HomeDoerSection } from './HomeDoerSection';
+import { HomeGiverSection } from './HomeGiverSection';
 import { a11yButtonProps, HITSLOP_44 } from '../../shared/lib/a11y';
+
+const RoleToggleOption = ({
+  label,
+  value,
+  isActive,
+  onPress,
+}: {
+  label: string;
+  value: Role;
+  isActive: boolean;
+  onPress: (role: Role) => void;
+}) => (
+  <Pressable
+    {...a11yButtonProps(label)}
+    accessibilityState={{ selected: isActive }}
+    onPress={() => onPress(value)}
+    hitSlop={HITSLOP_44}
+    style={({ pressed }) => [
+      styles.toggleOption,
+      isActive ? styles.toggleOptionActive : null,
+      pressed ? styles.toggleOptionPressed : null,
+    ]}
+  >
+    <Text
+      variant="sm"
+      weight={isActive ? 'bold' : 'medium'}
+      style={isActive ? styles.toggleTextActive : styles.toggleText}
+    >
+      {label}
+    </Text>
+  </Pressable>
+);
 
 export const HomeScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { openSheet } = useModalSheet();
-  const [locationGranted, setLocationGranted] = useState<boolean | null>(null);
+  const { role, setRole } = useRole();
+
+  const headerCopy = useMemo(
+    () =>
+      role === 'doer'
+        ? {
+            title: 'Missioni vicino a te',
+            subtitle: 'Trova e avvia incarichi in tre tocchi.',
+            actionLabel: 'Apri notifiche',
+          }
+        : {
+            title: 'Le tue missioni',
+            subtitle: 'Pubblica, segui lo stato e rilassa le spalle.',
+            actionLabel: 'Contatta supporto',
+          },
+    [role],
+  );
+
+  const handleOpenAction = () => {
+    // Placeholder: collegheremo notifiche/supporto quando disponibili
+    navigation.navigate('Profile');
+  };
 
   const handleCreateMission = () => {
     openSheet(CreateMissionSheet, undefined, {
-      title: strings.create.sheetTitle,
-      accessibilityLabel: strings.create.sheetTitle,
+      title: 'Nuova missione',
+      accessibilityLabel: 'Nuova missione',
     });
   };
 
-  const handleRequestLocation = async () => {
-    const { status } = await requestLocationPermission();
-    setLocationGranted(status === 'granted');
-  };
-
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text variant="md" weight="bold">
-          {strings.home.welcome}
-        </Text>
-        <Pressable
-          {...a11yButtonProps(strings.home.profileIconLabel)}
-          onPress={() => navigation.navigate('Profile')}
-          hitSlop={HITSLOP_44}
-          style={styles.profileIcon}
-        >
-          <Text variant="sm" weight="bold">
-            P
-          </Text>
-        </Pressable>
-      </View>
-      <View style={styles.cards}>
-        <TouchableCard label={strings.home.createMission} onPress={handleCreateMission}>
-          <Text variant="md" weight="bold">
-            {strings.home.createMission}
-          </Text>
-          <Text variant="xs" style={styles.cardSubtitle}>
-            {strings.home.createMissionSubtitle}
-          </Text>
-        </TouchableCard>
-        <TouchableCard
-          label={strings.home.joinMission}
-          onPress={() => navigation.navigate('Missions')}
-        >
-          <Text variant="md" weight="bold">
-            {strings.home.joinMission}
-          </Text>
-          <Text variant="xs" style={styles.cardSubtitle}>
-            {strings.home.joinMissionSubtitle}
-          </Text>
-        </TouchableCard>
-        <TouchableCard label={strings.home.joinEvents} onPress={() => navigation.navigate('Events')}>
-          <Text variant="md" weight="bold">
-            {strings.home.joinEvents}
-          </Text>
-          <Text variant="xs" style={styles.cardSubtitle}>
-            {strings.home.joinEventsSubtitle}
-          </Text>
-        </TouchableCard>
-      </View>
-      <View style={styles.footer}>
-        <Button label={strings.home.requestLocation} onPress={handleRequestLocation} variant="secondary" />
-        {locationGranted !== null ? (
-          <Text variant="xs" style={styles.permissionResult}>
-            {locationGranted ? strings.home.locationGranted : strings.home.locationDenied}
-          </Text>
-        ) : null}
+    <SafeAreaView style={styles.safe}>
+      <StatusBar style="dark" />
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <View style={styles.headerCopy}>
+            <Text variant="lg" weight="bold" style={styles.headerTitle}>
+              {headerCopy.title}
+            </Text>
+            <Spacer size="xs" />
+            <Text variant="sm" style={styles.headerSubtitle}>
+              {headerCopy.subtitle}
+            </Text>
+          </View>
+          <Pressable
+            {...a11yButtonProps(headerCopy.actionLabel)}
+            onPress={handleOpenAction}
+            hitSlop={HITSLOP_44}
+            style={({ pressed }) => [styles.headerAction, pressed ? styles.headerActionPressed : null]}
+          >
+            <View style={styles.actionDot} />
+          </Pressable>
+        </View>
+
+        <View style={styles.toggle}>
+          <RoleToggleOption label="Doer" value="doer" isActive={role === 'doer'} onPress={setRole} />
+          <RoleToggleOption label="Giver" value="giver" isActive={role === 'giver'} onPress={setRole} />
+        </View>
+
+        <Spacer size="md" />
+
+        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+          {role === 'doer' ? (
+            <HomeDoerSection onExploreAll={() => navigation.navigate('Missions')} />
+          ) : (
+            <HomeGiverSection
+              onCreateMission={handleCreateMission}
+              onManageListings={() => navigation.navigate('Missions')}
+            />
+          )}
+        </ScrollView>
       </View>
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  safe: {
     flex: 1,
     backgroundColor: theme.colors.background,
-    padding: theme.spacing.md,
-    gap: theme.spacing.md,
+  },
+  container: {
+    flex: 1,
+    paddingHorizontal: theme.spacing.lg,
+    paddingTop: theme.spacing.lg,
+    paddingBottom: theme.spacing.lg,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
+    gap: theme.spacing.md,
   },
-  profileIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: theme.colors.primary,
+  headerCopy: {
+    flex: 1,
+  },
+  headerTitle: {
+    color: theme.colors.textPrimary,
+  },
+  headerSubtitle: {
+    color: theme.colors.textSecondary,
+  },
+  headerAction: {
+    width: 48,
+    height: 48,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  cards: {
+  headerActionPressed: {
+    opacity: 0.85,
+  },
+  actionDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: theme.colors.primary,
+  },
+  toggle: {
+    marginTop: theme.spacing.md,
+    flexDirection: 'row',
+    backgroundColor: theme.colors.surface,
+    padding: 4,
+    borderRadius: theme.radius.lg,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+  },
+  toggleOption: {
     flex: 1,
-    gap: theme.spacing.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    borderRadius: theme.radius.md,
   },
-  cardSubtitle: {
+  toggleOptionActive: {
+    backgroundColor: theme.colors.primary,
+  },
+  toggleOptionPressed: {
+    opacity: 0.9,
+  },
+  toggleText: {
     color: theme.colors.textSecondary,
-    marginTop: theme.spacing.xs,
   },
-  footer: {
-    gap: theme.spacing.xs,
+  toggleTextActive: {
+    color: theme.colors.onPrimary,
   },
-  permissionResult: {
-    color: theme.colors.textSecondary,
+  scrollContent: {
+    paddingTop: theme.spacing.lg,
+    paddingBottom: theme.spacing.xl,
+    gap: theme.spacing.lg,
   },
 });
