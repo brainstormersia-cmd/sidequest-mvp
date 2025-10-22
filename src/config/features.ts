@@ -2,7 +2,7 @@ export const useOfflineFallback = true;
 
 export const features = {
   useOfflineFallback,
-  enableHaptics: false,
+  enableHaptics: true,
 };
 
 export type FeatureFlags = typeof features;
