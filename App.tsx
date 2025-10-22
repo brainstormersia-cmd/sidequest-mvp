@@ -1,5 +1,6 @@
 // App.tsx (root)
 // App.tsx o index.tsx — PRIMA di tutto
+
 import 'react-native-get-random-values';
 
 import { v4 as uuidv4 } from 'uuid';
