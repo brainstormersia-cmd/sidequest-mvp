@@ -14,7 +14,7 @@ type Props = PressableProps & {
 
 export const Button = ({ label, loading = false, variant = 'primary', style, ...rest }: Props) => {
   const backgroundColor = variant === 'primary' ? theme.colors.primary : theme.colors.surfaceAlt;
-  const textColor = variant === 'primary' ? theme.colors.textPrimary : theme.colors.textSecondary;
+  const textColor = variant === 'primary' ? theme.colors.onPrimary : theme.colors.textSecondary;
 
   return (
     <Pressable
