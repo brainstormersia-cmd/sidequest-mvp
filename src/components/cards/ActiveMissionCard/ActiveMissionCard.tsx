@@ -3,12 +3,10 @@ import { LinearGradient } from 'expo-linear-gradient';
 import {
   Animated,
   Easing,
-  GestureResponderEvent,
   LayoutChangeEvent,
   Pressable,
   StyleSheet,
   View,
-  ViewStyle,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { Text } from '../../../shared/ui/Text';
@@ -17,35 +15,29 @@ import { a11yButtonProps, HITSLOP_44 } from '../../../shared/lib/a11y';
 import { ActiveMissionCardProps } from './ActiveMissionCard.types';
 import { useReduceMotion } from './ActiveMissionCard.anim';
 
-const roleLabels: Record<ActiveMissionCardProps['role'], string> = {
-  courier: 'Missione corriere attiva',
-  quester: 'Missione quester attiva',
-  doer: 'Missione doer attiva',
-};
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-const statusToneToColor = (tone: ActiveMissionCardProps['statusTone']) => {
+const statusToneToColor = (tone: ActiveMissionCardProps['statusTone'] = 'success') => {
   switch (tone) {
-    case 'success':
-      return theme.colors.success;
     case 'warning':
       return theme.colors.warning;
     case 'review':
       return theme.colors.accent;
+    case 'muted':
+      return 'rgba(255,255,255,0.64)';
     default:
-      return theme.colors.textSecondary;
+      return theme.colors.success;
   }
 };
 
-const etaToneToColor = (tone: ActiveMissionCardProps['etaTone']) => {
+const etaToneToColor = (tone: ActiveMissionCardProps['etaTone'] = 'success') => {
   switch (tone) {
-    case 'success':
-      return theme.colors.success;
     case 'warning':
-      return theme.colors.warning;
+      return 'rgba(250, 204, 21, 0.85)';
     case 'review':
-      return theme.colors.accent;
+      return 'rgba(147, 51, 234, 0.85)';
     default:
-      return theme.colors.onPrimary;
+      return 'rgba(34, 197, 94, 0.85)';
   }
 };
 
@@ -56,450 +48,205 @@ const clampProgress = (value: number) => {
   return Math.max(0, Math.min(1, value));
 };
 
-type TimelineStep = {
-  id: string;
-  label: string;
-  phase: 'completed' | 'current' | 'upcoming';
+const ChatGlyph = () => {
+  return (
+    <View style={styles.chatGlyph}>
+      <View style={styles.chatBubble} />
+      <View style={styles.chatTail} />
+    </View>
+  );
 };
-
-const buildTimeline = (roadmap: ActiveMissionCardProps['roadmap']): TimelineStep[] => {
-  if (roadmap.length === 0) {
-    return [];
-  }
-
-  const firstUpcomingIndex = roadmap.findIndex((step) => step.status !== 'completed');
-  const currentIndex = firstUpcomingIndex === -1 ? roadmap.length - 1 : firstUpcomingIndex;
-
-  return roadmap.map((step, index) => {
-    if (step.status === 'completed') {
-      return { ...step, phase: 'completed' };
-    }
-
-    if (index === currentIndex) {
-      return { ...step, phase: 'current' };
-    }
-
-    return { ...step, phase: 'upcoming' };
-  });
-};
-
-const ROTATION_DELAY = 8000;
-const TRANSITION_DURATION = theme.motion.duration.slow;
 
 export const ActiveMissionCard: React.FC<ActiveMissionCardProps> = React.memo(
   ({
-    role,
+    statusLabel,
+    statusTone,
     etaLabel,
     etaSubLabel,
-    etaTone = 'success',
-    statusLabel,
-    statusTone = 'success',
+    etaTone,
     title,
     subtitle,
     progress,
     progressLabel,
     onPress,
     onPressChat,
-    playState: _playState = 'playing',
-    visible: _visible = true,
     avatarInitials,
-    roadmap,
   }) => {
     const reduceMotion = useReduceMotion();
-    const [isExpanded, setIsExpanded] = useState(false);
-    const expansion = useRef(new Animated.Value(0)).current;
-    const [detailsHeight, setDetailsHeight] = useState(0);
-    const updateDriver = useRef(new Animated.Value(1)).current;
-    const rotationTimeout = useRef<NodeJS.Timeout | null>(null);
-    const rotationInterval = useRef<NodeJS.Timeout | null>(null);
+    const scaleDriver = useRef(new Animated.Value(1)).current;
+    const progressDriver = useRef(new Animated.Value(0)).current;
+    const [trackWidth, setTrackWidth] = useState(0);
+    const longPressTriggered = useRef(false);
 
-    const gradientColors = useMemo<Readonly<[string, string]>>(
-      () => ['#0B1120', '#1F2937'] as const,
-      [],
-    );
+    const statusColor = useMemo(() => statusToneToColor(statusTone), [statusTone]);
+    const timerColor = useMemo(() => etaToneToColor(etaTone), [etaTone]);
+    const timerLabel = useMemo(() => {
+      if (!etaSubLabel) {
+        return etaLabel;
+      }
+      return `${etaLabel} ${etaSubLabel}`;
+    }, [etaLabel, etaSubLabel]);
 
-    const timeline = useMemo(() => buildTimeline(roadmap), [roadmap]);
-    const rotationSteps = timeline.length > 0 ? timeline : [];
-    const [currentRotationIndex, setCurrentRotationIndex] = useState(0);
+    const handleTrackLayout = useCallback((event: LayoutChangeEvent) => {
+      setTrackWidth(event.nativeEvent.layout.width);
+    }, []);
 
     useEffect(() => {
-      setCurrentRotationIndex((prev) => {
-        if (rotationSteps.length === 0) {
-          return 0;
-        }
-        return Math.min(prev, rotationSteps.length - 1);
-      });
-    }, [rotationSteps.length]);
-
-    useEffect(() => {
-      if (rotationTimeout.current) {
-        clearTimeout(rotationTimeout.current);
-        rotationTimeout.current = null;
-      }
-      if (rotationInterval.current) {
-        clearInterval(rotationInterval.current);
-        rotationInterval.current = null;
-      }
-      updateDriver.stopAnimation();
-      updateDriver.setValue(1);
-
-      if (reduceMotion || rotationSteps.length <= 1 || isExpanded) {
-        return () => undefined;
-      }
-
-      const runCycle = () => {
-        Animated.timing(updateDriver, {
-          toValue: 0,
-          duration: TRANSITION_DURATION,
-          easing: Easing.linear,
-          useNativeDriver: true,
-        }).start(({ finished }) => {
-          if (!finished) {
-            return;
-          }
-          setCurrentRotationIndex((prev) => {
-            const next = (prev + 1) % rotationSteps.length;
-            updateDriver.setValue(0);
-            Animated.timing(updateDriver, {
-              toValue: 1,
-              duration: TRANSITION_DURATION,
-              easing: Easing.linear,
-              useNativeDriver: true,
-            }).start();
-            return next;
-          });
-        });
-      };
-
-      rotationTimeout.current = setTimeout(() => {
-        runCycle();
-        rotationInterval.current = setInterval(runCycle, ROTATION_DELAY);
-      }, ROTATION_DELAY);
-
-      return () => {
-        if (rotationTimeout.current) {
-          clearTimeout(rotationTimeout.current);
-          rotationTimeout.current = null;
-        }
-        if (rotationInterval.current) {
-          clearInterval(rotationInterval.current);
-          rotationInterval.current = null;
-        }
-        updateDriver.stopAnimation();
-        updateDriver.setValue(1);
-      };
-    }, [isExpanded, reduceMotion, rotationSteps.length, updateDriver]);
-
-    useEffect(() => {
-      if (reduceMotion) {
-        expansion.setValue(isExpanded ? 1 : 0);
+      const target = trackWidth * clampProgress(progress);
+      if (!trackWidth) {
         return;
       }
-
-      Animated.timing(expansion, {
-        toValue: isExpanded ? 1 : 0,
-        duration: theme.motion.duration.slow,
+      if (reduceMotion) {
+        progressDriver.setValue(target);
+        return;
+      }
+      Animated.timing(progressDriver, {
+        toValue: target,
+        duration: 250,
         easing: Easing.out(Easing.cubic),
         useNativeDriver: false,
       }).start();
-    }, [expansion, isExpanded, reduceMotion]);
+    }, [progress, progressDriver, reduceMotion, trackWidth]);
+
+    const animateScale = useCallback(
+      (toValue: number) => {
+        if (reduceMotion) {
+          scaleDriver.setValue(toValue);
+          return;
+        }
+        Animated.spring(scaleDriver, {
+          toValue,
+          speed: 18,
+          bounciness: 6,
+          useNativeDriver: true,
+        }).start();
+      },
+      [reduceMotion, scaleDriver],
+    );
 
     const handlePressIn = useCallback(() => {
+      longPressTriggered.current = false;
+      animateScale(1.02);
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => undefined);
-    }, []);
+    }, [animateScale]);
 
-    const longPressTriggeredRef = useRef(false);
+    const handlePressOut = useCallback(() => {
+      animateScale(1);
+    }, [animateScale]);
 
-    const handlePress = useCallback(() => {
-      if (longPressTriggeredRef.current) {
-        longPressTriggeredRef.current = false;
-        return;
-      }
-      setIsExpanded((prev) => !prev);
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => undefined);
-    }, []);
-
-    const handleLongPress = useCallback(() => {
-      longPressTriggeredRef.current = true;
+    const triggerOpen = useCallback(() => {
       onPress?.();
     }, [onPress]);
 
-    const handlePressChat = useCallback(
-      (event: GestureResponderEvent) => {
-        event.stopPropagation();
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => undefined);
-        onPressChat?.();
-      },
-      [onPressChat],
-    );
-
-    const handleDetailsLayout = useCallback((event: LayoutChangeEvent) => {
-      const { height } = event.nativeEvent.layout;
-      setDetailsHeight((prev) => (prev === height ? prev : height));
-    }, []);
-
-    const etaColor = useMemo(() => etaToneToColor(etaTone), [etaTone]);
-    const statusColor = useMemo(() => statusToneToColor(statusTone), [statusTone]);
-    const progressWidth = useMemo(
-      () => `${Math.round(clampProgress(progress) * 100)}%` as `${number}%`,
-      [progress],
-    );
-
-    const statusUpdate = rotationSteps[currentRotationIndex];
-
-    const statusAnimatedStyle = useMemo(
-      () => ({
-        opacity: updateDriver,
-        transform: [
-          {
-            translateY: updateDriver.interpolate({
-              inputRange: [0, 1],
-              outputRange: [theme.space.xs * 0.5, 0],
-            }),
-          },
-        ],
-      }),
-      [updateDriver],
-    );
-
-    const dotPulse = useRef(new Animated.Value(0)).current;
-
-    useEffect(() => {
-      if (reduceMotion) {
-        dotPulse.setValue(0);
+    const handlePress = useCallback(() => {
+      if (longPressTriggered.current) {
+        longPressTriggered.current = false;
         return;
       }
+      triggerOpen();
+    }, [triggerOpen]);
 
-      const animation = Animated.loop(
-        Animated.sequence([
-          Animated.timing(dotPulse, {
-            toValue: 1,
-            duration: 1600,
-            easing: Easing.inOut(Easing.ease),
-            useNativeDriver: true,
-          }),
-          Animated.timing(dotPulse, {
-            toValue: 0,
-            duration: 1600,
-            easing: Easing.inOut(Easing.ease),
-            useNativeDriver: true,
-          }),
-        ]),
-      );
+    const handleLongPress = useCallback(() => {
+      longPressTriggered.current = true;
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => undefined);
+      triggerOpen();
+    }, [triggerOpen]);
 
-      animation.start();
+    const handlePressChat = useCallback(() => {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => undefined);
+      onPressChat?.();
+    }, [onPressChat]);
 
-      return () => {
-        animation.stop();
-      };
-    }, [dotPulse, reduceMotion]);
-
-    const dotAnimatedStyle = useMemo(
+    const animatedCardStyle = useMemo(
       () => ({
-        transform: [
-          {
-            scale: dotPulse.interpolate({
-              inputRange: [0, 1],
-              outputRange: [1, 1.08],
-            }),
-          },
-        ],
+        transform: [{ scale: scaleDriver }],
       }),
-      [dotPulse],
+      [scaleDriver],
     );
 
-    const detailsAnimatedStyle = useMemo(() => {
-      if (reduceMotion) {
-        return isExpanded ? styles.detailsVisible : styles.detailsHidden;
+    const progressStyle = useMemo(() => {
+      if (!trackWidth) {
+        return { width: 0 };
       }
-
-      const height = expansion.interpolate({
-        inputRange: [0, 1],
-        outputRange: [0, detailsHeight || 1],
-      });
-
       return {
-        height,
-        opacity: expansion,
-      } as Animated.WithAnimatedObject<ViewStyle>;
-    }, [detailsHeight, expansion, isExpanded, reduceMotion]);
-
-    const cardA11yProps = useMemo(() => {
-      const base = a11yButtonProps(roleLabels[role]);
-      return {
-        ...base,
-        accessibilityState: {
-          ...base.accessibilityState,
-          expanded: isExpanded,
-        },
-      };
-    }, [isExpanded, role]);
+        width: progressDriver,
+      } as const;
+    }, [progressDriver, trackWidth]);
 
     return (
-      <View style={styles.wrapper}>
-        <Pressable
-          {...cardA11yProps}
-          onPress={handlePress}
-          onPressIn={handlePressIn}
-          onLongPress={handleLongPress}
-          hitSlop={HITSLOP_44}
-          style={({ pressed }) => [styles.pressable, pressed ? styles.pressablePressed : null]}
+      <AnimatedPressable
+        {...a11yButtonProps(`Missione attiva con ${title}`)}
+        onPress={handlePress}
+        onLongPress={handleLongPress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        hitSlop={HITSLOP_44}
+        accessibilityHint="Tocca per aprire il riepilogo della missione"
+        style={[styles.wrapper, animatedCardStyle]}
+      >
+        <LinearGradient
+          colors={['#0F1117', '#181C24']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.card}
         >
-          <LinearGradient
-            colors={gradientColors}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 0, y: 1 }}
-            style={styles.card}
-          >
-            <View style={styles.topSection}>
-              <View style={styles.statusColumn}>
-                <Animated.View style={[styles.statusDot, { backgroundColor: statusColor }, dotAnimatedStyle]} />
-                <View style={styles.statusTextBlock}>
-                  <Text variant="xs" weight="medium" style={[styles.statusLabel, { color: statusColor }]} numberOfLines={1}>
-                    {statusLabel}
-                  </Text>
-                  {statusUpdate ? (
-                    <Animated.View style={[styles.statusUpdate, statusAnimatedStyle]}>
-                      <Text
-                        variant="xs"
-                        style={[
-                          styles.statusUpdateLabel,
-                          statusUpdate.phase === 'completed'
-                            ? styles.statusUpdateCompleted
-                            : statusUpdate.phase === 'current'
-                            ? styles.statusUpdateCurrent
-                            : styles.statusUpdateUpcoming,
-                        ]}
-                        numberOfLines={1}
-                      >
-                        {statusUpdate.label}
-                      </Text>
-                    </Animated.View>
-                  ) : null}
-                </View>
-              </View>
-
-              <View style={styles.metaColumn}>
-                <View style={[styles.timerPill, { borderColor: etaColor }]}>
-                  <Text variant="md" weight="bold" style={[styles.timerPrimary, { color: etaColor }]} numberOfLines={1}>
-                    {etaLabel}
-                  </Text>
-                  {etaSubLabel ? (
-                    <Text variant="xs" style={styles.timerSecondary} numberOfLines={1}>
-                      {etaSubLabel}
-                    </Text>
-                  ) : null}
-                </View>
-                {onPressChat ? (
-                  <Pressable
-                    {...a11yButtonProps('Apri chat della missione')}
-                    onPress={handlePressChat}
-                    hitSlop={HITSLOP_44}
-                    style={({ pressed }) => [styles.chatButton, pressed ? styles.chatButtonPressed : null]}
-                  >
-                    <Text variant="sm" weight="bold" style={styles.chatIcon}>
-                      💬
-                    </Text>
-                  </Pressable>
-                ) : null}
-              </View>
+          <View style={styles.headerRow}>
+            <Text variant="xs" weight="medium" style={[styles.statusLabel, { color: statusColor }]} numberOfLines={1}>
+              {statusLabel}
+            </Text>
+            <View style={styles.headerMeta}>
+              <Text
+                variant="sm"
+                weight="medium"
+                style={[styles.timerLabel, { color: timerColor }]}
+                numberOfLines={1}
+              >
+                {timerLabel}
+              </Text>
+              {onPressChat ? (
+                <Pressable
+                  {...a11yButtonProps('Apri chat missione')}
+                  hitSlop={HITSLOP_44}
+                  onPress={handlePressChat}
+                  style={({ pressed }) => [styles.chatButton, pressed ? styles.chatButtonPressed : null]}
+                >
+                  <ChatGlyph />
+                </Pressable>
+              ) : null}
             </View>
+          </View>
 
-            <View style={styles.bottomSection}>
-              <View style={styles.identityBlock}>
-                {avatarInitials ? (
-                  <View style={styles.avatar}>
-                    <Text variant="sm" weight="bold" style={styles.avatarText}>
-                      {avatarInitials}
-                    </Text>
-                  </View>
-                ) : null}
-                <View style={styles.identityText}>
-                  <Text variant="lg" weight="bold" style={styles.doerName} numberOfLines={1}>
-                    {title}
-                  </Text>
-                  <Text variant="sm" style={styles.doerSummary} numberOfLines={2}>
-                    {subtitle}
-                  </Text>
-                  {statusUpdate ? (
-                    <Animated.View style={[styles.statusUpdate, statusAnimatedStyle]}>
-                      <Text
-                        variant="xs"
-                        style={[
-                          styles.statusUpdateLabel,
-                          statusUpdate.phase === 'completed'
-                            ? styles.statusUpdateCompleted
-                            : statusUpdate.phase === 'current'
-                            ? styles.statusUpdateCurrent
-                            : styles.statusUpdateUpcoming,
-                        ]}
-                        numberOfLines={1}
-                      >
-                        {statusUpdate.label}
-                      </Text>
-                    </Animated.View>
-                  ) : null}
-                </View>
+          <View style={styles.identityRow}>
+            {avatarInitials ? (
+              <View style={styles.avatar}>
+                <Text variant="sm" weight="bold" style={styles.avatarText}>
+                  {avatarInitials}
+                </Text>
               </View>
-
-              <View style={styles.progressRow}>
-                <View style={styles.progressTrack}>
-                  <View style={[styles.progressFill, { width: progressWidth }]} />
-                </View>
-                {progressLabel ? (
-                  <Text variant="xs" style={styles.progressLabel} numberOfLines={1}>
-                    {progressLabel}
-                  </Text>
-                ) : null}
-              </View>
+            ) : null}
+            <View style={styles.identityText}>
+              <Text variant="lg" weight="bold" style={styles.doerName} numberOfLines={1}>
+                {title}
+              </Text>
+              <Text variant="sm" style={styles.doerSummary} numberOfLines={2}>
+                {subtitle}
+              </Text>
             </View>
+          </View>
 
-            <Animated.View
-              style={[styles.detailsContainer, detailsAnimatedStyle]}
-              pointerEvents={isExpanded ? 'auto' : 'none'}
-            >
-              <View style={styles.detailsContent} onLayout={handleDetailsLayout}>
-                <View style={styles.timeline}>
-                  {timeline.map((step, index) => {
-                    const isLast = index === timeline.length - 1;
-                    return (
-                      <View key={step.id} style={styles.timelineRow}>
-                        <View style={styles.timelineAxis}>
-                          <View
-                            style={[
-                              styles.timelineNode,
-                              step.phase === 'completed'
-                                ? styles.timelineNodeCompleted
-                                : step.phase === 'current'
-                                ? styles.timelineNodeCurrent
-                                : styles.timelineNodeUpcoming,
-                            ]}
-                          />
-                          {!isLast ? <View style={styles.timelineConnector} /> : null}
-                        </View>
-                        <Text
-                          variant="sm"
-                          style={[
-                            styles.timelineLabel,
-                            step.phase === 'completed'
-                              ? styles.timelineLabelCompleted
-                              : step.phase === 'current'
-                              ? styles.timelineLabelCurrent
-                              : styles.timelineLabelUpcoming,
-                          ]}
-                          numberOfLines={2}
-                        >
-                          {step.label}
-                        </Text>
-                      </View>
-                    );
-                  })}
-                </View>
-              </View>
-            </Animated.View>
-          </LinearGradient>
-        </Pressable>
-      </View>
+          <View style={styles.progressBlock}>
+            <View style={styles.progressTrack} onLayout={handleTrackLayout}>
+              <Animated.View style={[styles.progressFill, progressStyle]} />
+              <View style={styles.progressInnerShadow} pointerEvents="none" />
+            </View>
+            {progressLabel ? (
+              <Text variant="xs" style={styles.progressLabel} numberOfLines={1}>
+                {progressLabel}
+              </Text>
+            ) : null}
+          </View>
+        </LinearGradient>
+      </AnimatedPressable>
     );
   },
 );
@@ -508,129 +255,82 @@ ActiveMissionCard.displayName = 'ActiveMissionCard';
 
 const styles = StyleSheet.create({
   wrapper: {
-    width: '100%',
-  },
-  pressable: {
-    borderRadius: theme.radius.xl,
+    borderRadius: theme.radius.lg,
     overflow: 'hidden',
-    shadowColor: '#0B0C0E',
-    shadowOpacity: 0.24,
-    shadowOffset: { width: 0, height: 12 },
-    shadowRadius: 24,
-    elevation: theme.elevation.level2,
-  },
-  pressablePressed: {
-    opacity: theme.opacity.pressed,
+    ...theme.shadow.soft,
   },
   card: {
-    position: 'relative',
-    paddingHorizontal: theme.space.xl,
-    paddingVertical: theme.space.lg,
-    borderRadius: theme.radius.xl,
-    borderWidth: 1,
-    borderColor: '#1F2933',
+    borderRadius: theme.radius.lg,
+    paddingVertical: theme.space['2xl'],
+    paddingHorizontal: theme.space['2xl'],
+    gap: theme.space.xl,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  statusLabel: {
+    letterSpacing: 0.2,
+    textTransform: 'uppercase',
+  },
+  headerMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: theme.space.md,
   },
+  timerLabel: {
+    color: 'rgba(255,255,255,0.72)',
+  },
   chatButton: {
-    minHeight: theme.touch.targetMin,
-    minWidth: theme.touch.targetMin,
     borderRadius: theme.radius.full,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: theme.colors.surface,
-    flexShrink: 0,
+    padding: theme.space.xs,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.12)',
+    backgroundColor: 'rgba(15,17,23,0.24)',
   },
   chatButtonPressed: {
     opacity: theme.opacity.pressed,
-    transform: [{ scale: 0.96 }],
   },
-  chatIcon: {
-    color: theme.colors.textPrimary,
-  },
-  topSection: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    gap: theme.space.md,
-  },
-  statusColumn: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: theme.space.sm,
-    flex: 1,
-  },
-  statusDot: {
-    width: theme.space.sm,
-    height: theme.space.sm,
-    borderRadius: theme.radius.full,
-  },
-  statusTextBlock: {
-    flex: 1,
-    gap: theme.space.xxs,
-  },
-  statusLabel: {
-    color: theme.colors.onPrimary,
-    letterSpacing: 0.2,
-  },
-  statusUpdate: {
-    flexDirection: 'row',
-  },
-  statusUpdateLabel: {
-    color: theme.colors.onPrimary,
-  },
-  statusUpdateCompleted: {
-    color: theme.colors.onPrimary,
-    fontWeight: theme.fontWeight.bold,
-  },
-  statusUpdateCurrent: {
-    color: theme.colors.onPrimary,
-  },
-  statusUpdateUpcoming: {
-    color: theme.colors.textSubtle,
-  },
-  metaColumn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.space.sm,
-    flexShrink: 0,
-  },
-  timerPill: {
-    paddingHorizontal: theme.space.md,
-    paddingVertical: theme.space.xs,
-    borderRadius: theme.radius.lg,
-    borderWidth: 1,
-    alignItems: 'center',
+  chatGlyph: {
+    width: theme.space.lg,
+    height: theme.space.lg,
     justifyContent: 'center',
-    gap: theme.space.xxs,
-    backgroundColor: 'transparent',
-    flexShrink: 0,
+    alignItems: 'center',
   },
-  timerPrimary: {
-    color: theme.colors.onPrimary,
+  chatBubble: {
+    width: '70%',
+    height: '55%',
+    borderRadius: theme.radius.md,
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.8)',
   },
-  timerSecondary: {
-    color: theme.colors.textSubtle,
+  chatTail: {
+    width: '30%',
+    height: 8,
+    borderBottomWidth: 2,
+    borderRightWidth: 2,
+    borderColor: 'rgba(255,255,255,0.8)',
+    borderBottomRightRadius: theme.radius.sm,
+    transform: [{ translateY: -2 }, { translateX: -4 }, { rotate: '45deg' }],
   },
-  bottomSection: {
-    gap: theme.space.md,
-  },
-  identityBlock: {
+  identityRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.space.md,
+    gap: theme.space.lg,
   },
   avatar: {
-    height: theme.space['3xl'],
     width: theme.space['3xl'],
+    height: theme.space['3xl'],
     borderRadius: theme.radius.full,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: theme.colors.surface,
-    backgroundColor: theme.colors.surfaceAlt,
+    borderColor: 'rgba(255,255,255,0.24)',
+    backgroundColor: 'rgba(255,255,255,0.08)',
   },
   avatarText: {
-    color: theme.colors.textPrimary,
+    color: theme.colors.onPrimary,
   },
   identityText: {
     flex: 1,
@@ -640,92 +340,34 @@ const styles = StyleSheet.create({
     color: theme.colors.onPrimary,
   },
   doerSummary: {
-    color: theme.colors.textSecondary,
+    color: 'rgba(255,255,255,0.72)',
   },
-  progressRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  progressBlock: {
     gap: theme.space.sm,
   },
   progressTrack: {
-    flex: 1,
-    height: theme.space.xs,
-    borderRadius: theme.space.xs,
-    backgroundColor: theme.colors.surface,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    borderRadius: theme.space.xs,
-    backgroundColor: theme.colors.primary,
-  },
-  progressLabel: {
-    color: theme.colors.textSubtle,
-    flexShrink: 0,
-  },
-  detailsContainer: {
-    overflow: 'hidden',
-  },
-  detailsHidden: {
-    height: 0,
-    opacity: 0,
-  },
-  detailsVisible: {
-    opacity: 1,
-  },
-  detailsContent: {
-    paddingTop: theme.space.md,
-    gap: theme.space.md,
-  },
-  timeline: {
-    gap: theme.space.md,
-  },
-  timelineRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: theme.space.md,
-  },
-  timelineAxis: {
-    alignItems: 'center',
-    width: theme.space.sm,
-  },
-  timelineNode: {
-    width: theme.space.sm,
     height: theme.space.sm,
     borderRadius: theme.radius.full,
-    borderWidth: 2,
+    backgroundColor: 'rgba(20,25,32,0.72)',
+    overflow: 'hidden',
+    position: 'relative',
   },
-  timelineNodeCompleted: {
-    borderColor: theme.colors.primary,
+  progressFill: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    borderRadius: theme.radius.full,
     backgroundColor: theme.colors.primary,
   },
-  timelineNodeCurrent: {
-    borderColor: theme.colors.accent,
-    backgroundColor: theme.colors.surface,
+  progressInnerShadow: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: theme.radius.full,
+    borderWidth: 1,
+    borderColor: 'rgba(13,17,23,0.32)',
   },
-  timelineNodeUpcoming: {
-    borderColor: theme.colors.textSubtle,
-    backgroundColor: theme.colors.surface,
-  },
-  timelineConnector: {
-    width: 2,
-    flex: 1,
-    backgroundColor: theme.colors.textSubtle,
-    marginTop: theme.space.xxs,
-  },
-  timelineLabel: {
-    flex: 1,
-    color: theme.colors.onPrimary,
-  },
-  timelineLabelCompleted: {
-    color: theme.colors.onPrimary,
-    fontWeight: theme.fontWeight.bold,
-  },
-  timelineLabelCurrent: {
-    color: theme.colors.onPrimary,
-    fontWeight: theme.fontWeight.medium,
-  },
-  timelineLabelUpcoming: {
-    color: theme.colors.textSubtle,
+  progressLabel: {
+    alignSelf: 'flex-end',
+    color: 'rgba(255,255,255,0.64)',
   },
 });
