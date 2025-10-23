@@ -1,5 +1,5 @@
 import React from 'react';
-import { ActivityIndicator, Pressable, PressableProps, StyleSheet } from 'react-native';
+import { ActivityIndicator, Pressable, PressableProps, StyleProp, StyleSheet, ViewStyle } from 'react-native';
 import { Text } from './Text';
 import { theme } from '../lib/theme';
 import { HITSLOP_44, a11yButtonProps } from '../lib/a11y';
@@ -21,15 +21,27 @@ export const Button = ({ label, loading = false, variant = 'primary', style, ...
       {...a11yButtonProps(label)}
       hitSlop={HITSLOP_44}
       accessibilityState={{ busy: loading, disabled: rest.disabled }}
-      style={({ pressed }) => [
-        styles.base,
-        { backgroundColor, opacity: pressed ? 0.9 : 1 },
-        rest.disabled ? styles.disabled : null,
-        style,
-      ]}
+      style={({ pressed }) => {
+        const dynamicStyle = {
+          backgroundColor,
+          opacity: pressed ? theme.opacity.pressed : 1,
+        };
+        return [
+          styles.base,
+          dynamicStyle,
+          rest.disabled ? styles.disabled : null,
+          style,
+        ] as StyleProp<ViewStyle>;
+      }}
       {...rest}
     >
-      {loading ? <ActivityIndicator color={textColor} /> : <Text weight="medium" style={{ color: textColor }}>{label}</Text>}
+      {loading ? (
+        <ActivityIndicator color={textColor} />
+      ) : (
+        <Text weight="medium" style={{ color: textColor }}>
+          {label}
+        </Text>
+      )}
     </Pressable>
   );
 };
@@ -41,9 +53,9 @@ const styles = StyleSheet.create({
     borderRadius: theme.radius.md,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 44,
+    minHeight: theme.touch.targetMin,
   },
   disabled: {
-    opacity: 0.6,
+    opacity: theme.opacity.disabled,
   },
 });

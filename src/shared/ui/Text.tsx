@@ -39,12 +39,12 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.lg,
   },
   regular: {
-    fontWeight: '400',
+    fontWeight: theme.fontWeight.regular,
   },
   medium: {
-    fontWeight: '600',
+    fontWeight: theme.fontWeight.medium,
   },
   bold: {
-    fontWeight: '700',
+    fontWeight: theme.fontWeight.bold,
   },
 });
