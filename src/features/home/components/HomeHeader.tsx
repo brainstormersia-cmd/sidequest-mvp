@@ -30,25 +30,33 @@ export const HomeHeader: React.FC<HomeHeaderProps> = React.memo(
     return (
       <View style={styles.container}>
         <View style={styles.textBlock}>
-          <Text variant="lg" weight="bold" style={styles.greeting}>
-            {greeting}
-          </Text>
-          <Pressable
-            {...a11yButtonProps(`Passa a ${oppositeRole}`)}
-            onPress={onPressSwitchRole}
-            hitSlop={HITSLOP_44}
-            style={({ pressed }) => [styles.switchRole, pressed ? styles.switchRolePressed : null]}
-          >
-            {({ pressed }) => (
-              <Text
-                variant="xs"
-                weight="medium"
-                style={[styles.switchRoleLabel, pressed ? styles.switchRoleLabelPressed : null]}
-              >
-                {`Passa a ${oppositeRole}`}
-              </Text>
-            )}
-          </Pressable>
+          <View style={styles.greetingRow}>
+            <Text variant="lg" weight="bold" style={styles.greeting} numberOfLines={1}>
+              {greeting}
+            </Text>
+            <Pressable
+              {...a11yButtonProps(`Passa a ${oppositeRole}`)}
+              onPress={onPressSwitchRole}
+              hitSlop={HITSLOP_44}
+              style={({ pressed }) => [styles.switchRole, pressed ? styles.switchRolePressed : null]}
+            >
+              {({ pressed }) => (
+                <Text
+                  variant="xs"
+                  weight="medium"
+                  style={[styles.switchRoleLabel, pressed ? styles.switchRoleLabelPressed : null]}
+                  numberOfLines={1}
+                >
+                  {`Passa a ${oppositeRole}`}
+                </Text>
+              )}
+            </Pressable>
+          </View>
+          {header.addressLabel ? (
+            <Text variant="sm" style={styles.addressLabel} numberOfLines={1}>
+              {header.addressLabel}
+            </Text>
+          ) : null}
         </View>
         <Pressable
           {...a11yButtonProps('Apri profilo')}
@@ -75,11 +83,17 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: theme.space.xs,
   },
+  greetingRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: theme.space.sm,
+  },
   greeting: {
+    flexShrink: 1,
     color: theme.colors.textPrimary,
   },
   switchRole: {
-    alignSelf: 'flex-end',
+    flexShrink: 0,
   },
   switchRolePressed: {
     opacity: theme.opacity.pressed,
@@ -89,6 +103,9 @@ const styles = StyleSheet.create({
   },
   switchRoleLabelPressed: {
     textDecorationLine: 'underline',
+  },
+  addressLabel: {
+    color: theme.colors.textSecondary,
   },
   profileButton: {
     borderRadius: theme.radius.full,
