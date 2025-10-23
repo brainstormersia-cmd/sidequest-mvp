@@ -14,6 +14,7 @@ export type ActiveMissionModel = {
   statusLabel: string;
   statusTone: 'success' | 'warning' | 'review' | 'muted';
   etaLabel: string;
+  etaSubLabel?: string;
   etaMinutes: number;
   etaTone: 'success' | 'review' | 'warning';
   doerName: string;
@@ -21,6 +22,11 @@ export type ActiveMissionModel = {
   doerAvatarInitials: string;
   progress: number;
   progressLabel: string;
+  roadmap: Array<{
+    id: string;
+    label: string;
+    status: 'completed' | 'upcoming';
+  }>;
 };
 
 export type RecentMissionModel = {
@@ -147,14 +153,21 @@ export const useGiverHomeState = () => {
         role: 'courier',
         statusLabel: 'Sta arrivando',
         statusTone: 'success',
-        etaLabel: '⏱ 17:35',
-        etaMinutes: 12,
+        etaLabel: '2h',
+        etaSubLabel: '35 min',
+        etaMinutes: 155,
         etaTone: 'success',
         doerName: 'Peter Parker',
         doerSummary: 'Ritirando ordine',
         doerAvatarInitials: 'PP',
         progress: 0.6,
         progressLabel: '60% completato',
+        roadmap: [
+          { id: 'checkpoint-1', label: 'Ritiro completato', status: 'completed' },
+          { id: 'checkpoint-2', label: 'In viaggio', status: 'completed' },
+          { id: 'checkpoint-3', label: 'Arrivo previsto', status: 'upcoming' },
+          { id: 'checkpoint-4', label: 'Consegna al destinatario', status: 'upcoming' },
+        ],
       },
       recentMissions: [
         {
