@@ -14,37 +14,40 @@ import { HomeDoerSection } from './HomeDoerSection';
 import { HomeGiverSection } from './HomeGiverSection';
 import { a11yButtonProps, HITSLOP_44 } from '../../shared/lib/a11y';
 
-const RoleToggleOption = ({
-  label,
-  value,
-  isActive,
-  onPress,
-}: {
-  label: string;
-  value: Role;
-  isActive: boolean;
-  onPress: (role: Role) => void;
-}) => (
-  <Pressable
-    {...a11yButtonProps(label)}
-    accessibilityState={{ selected: isActive }}
-    onPress={() => onPress(value)}
-    hitSlop={HITSLOP_44}
-    style={({ pressed }) => [
-      styles.toggleOption,
-      isActive ? styles.toggleOptionActive : null,
-      pressed ? styles.toggleOptionPressed : null,
-    ]}
-  >
-    <Text
-      variant="sm"
-      weight={isActive ? 'bold' : 'medium'}
-      style={isActive ? styles.toggleTextActive : styles.toggleText}
+const RoleToggleOption = React.memo(
+  ({
+    label,
+    value,
+    isActive,
+    onPress,
+  }: {
+    label: string;
+    value: Role;
+    isActive: boolean;
+    onPress: (role: Role) => void;
+  }) => (
+    <Pressable
+      {...a11yButtonProps(label)}
+      accessibilityState={{ selected: isActive }}
+      onPress={() => onPress(value)}
+      hitSlop={HITSLOP_44}
+      style={({ pressed }) => [
+        styles.toggleOption,
+        isActive ? styles.toggleOptionActive : null,
+        pressed ? styles.toggleOptionPressed : null,
+      ]}
     >
-      {label}
-    </Text>
-  </Pressable>
+      <Text
+        variant="sm"
+        weight={isActive ? 'bold' : 'medium'}
+        style={isActive ? styles.toggleTextActive : styles.toggleText}
+      >
+        {label}
+      </Text>
+    </Pressable>
+  ),
 );
+RoleToggleOption.displayName = 'RoleToggleOption';
 
 export const HomeScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -97,7 +100,10 @@ export const HomeScreen = () => {
             {...a11yButtonProps(headerCopy.actionLabel)}
             onPress={handleOpenAction}
             hitSlop={HITSLOP_44}
-            style={({ pressed }) => [styles.headerAction, pressed ? styles.headerActionPressed : null]}
+            style={({ pressed }) => [
+              styles.headerAction,
+              pressed ? styles.headerActionPressed : null,
+            ]}
           >
             <View style={styles.actionDot} />
           </Pressable>
@@ -110,7 +116,13 @@ export const HomeScreen = () => {
 
         <Spacer size="md" />
 
-        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          contentInsetAdjustmentBehavior="automatic"
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
           {role === 'doer' ? (
             <HomeDoerSection onExploreAll={() => navigation.navigate('Missions')} />
           ) : (
@@ -152,9 +164,10 @@ const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
   },
   headerAction: {
-    width: 48,
-    height: 48,
-    borderRadius: 16,
+    flexShrink: 0,
+    minHeight: theme.touch.targetMin,
+    minWidth: theme.touch.targetMin,
+    borderRadius: theme.radius.full,
     borderWidth: 1,
     borderColor: theme.colors.border,
     backgroundColor: theme.colors.surface,
@@ -162,19 +175,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   headerActionPressed: {
-    opacity: 0.85,
+    opacity: theme.opacity.pressed,
   },
   actionDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+    minHeight: theme.spacing.sm,
+    minWidth: theme.spacing.sm,
+    aspectRatio: 1,
+    borderRadius: theme.radius.full,
     backgroundColor: theme.colors.primary,
   },
   toggle: {
     marginTop: theme.spacing.md,
     flexDirection: 'row',
     backgroundColor: theme.colors.surface,
-    padding: 4,
+    padding: theme.spacing.xxs,
     borderRadius: theme.radius.lg,
     borderWidth: 1,
     borderColor: theme.colors.border,
@@ -183,14 +197,14 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 12,
+    paddingVertical: theme.spacing.sm,
     borderRadius: theme.radius.md,
   },
   toggleOptionActive: {
     backgroundColor: theme.colors.primary,
   },
   toggleOptionPressed: {
-    opacity: 0.9,
+    opacity: theme.opacity.pressed,
   },
   toggleText: {
     color: theme.colors.textSecondary,

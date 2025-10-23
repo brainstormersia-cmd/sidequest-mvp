@@ -122,7 +122,10 @@ export const HomeGiverSection: React.FC<Props> = ({ onCreateMission, onManageLis
                 {...a11yButtonProps(mission.actionLabel)}
                 hitSlop={HITSLOP_44}
                 onPress={onManageListings}
-                style={({ pressed }) => [styles.missionAction, pressed ? styles.missionActionPressed : null]}
+                style={({ pressed }) => [
+                  styles.missionAction,
+                  pressed ? styles.missionActionPressed : null,
+                ]}
               >
                 <Text variant="sm" weight="medium" style={styles.missionActionText}>
                   {mission.actionLabel}
@@ -177,9 +180,11 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.surface,
     paddingHorizontal: theme.spacing.lg,
     paddingVertical: theme.spacing.md,
+    gap: theme.spacing.lg,
   },
   escrowBlock: {
     flex: 1,
+    minWidth: '45%',
   },
   escrowLabel: {
     color: theme.colors.textSecondary,
@@ -188,7 +193,7 @@ const styles = StyleSheet.create({
     color: theme.colors.textPrimary,
   },
   escrowDivider: {
-    width: 1,
+    width: StyleSheet.hairlineWidth,
     height: '60%',
     backgroundColor: theme.colors.border,
   },
@@ -198,8 +203,8 @@ const styles = StyleSheet.create({
     gap: theme.spacing.sm,
   },
   tabChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: theme.spacing.sm,
     borderRadius: theme.radius.md,
     borderWidth: 1,
     borderColor: theme.colors.border,
@@ -210,7 +215,7 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.primary,
   },
   tabChipPressed: {
-    opacity: 0.9,
+    opacity: theme.opacity.pressed,
   },
   tabText: {
     color: theme.colors.textSecondary,
@@ -234,6 +239,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     gap: theme.spacing.sm,
+    flexWrap: 'wrap',
   },
   missionTitle: {
     flex: 1,
@@ -252,11 +258,12 @@ const styles = StyleSheet.create({
     marginTop: theme.spacing.sm,
     borderRadius: theme.radius.md,
     backgroundColor: theme.colors.surfaceAlt,
-    paddingVertical: 12,
+    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.md,
     alignItems: 'center',
   },
   missionActionPressed: {
-    opacity: 0.9,
+    opacity: theme.opacity.pressed,
   },
   missionActionText: {
     color: theme.colors.primary,
@@ -271,12 +278,14 @@ const styles = StyleSheet.create({
     gap: theme.spacing.sm,
   },
   emptyIllustration: {
-    width: 96,
-    height: 96,
-    borderRadius: 36,
+    minWidth: theme.spacing['4xl'],
+    minHeight: theme.spacing['4xl'],
+    aspectRatio: 1,
+    borderRadius: theme.radius.full,
     backgroundColor: theme.colors.surfaceAlt,
     borderWidth: 1,
     borderColor: theme.colors.border,
+    alignSelf: 'center',
   },
   emptyTitle: {
     color: theme.colors.textPrimary,

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable, PressableProps, StyleSheet, View, ViewProps } from 'react-native';
+import { Pressable, PressableProps, StyleProp, StyleSheet, View, ViewProps, ViewStyle } from 'react-native';
 import { theme } from '../lib/theme';
 import { a11yCardProps, HITSLOP_44 } from '../lib/a11y';
 
@@ -16,7 +16,13 @@ export const TouchableCard = ({ label, children, style, ...rest }: TouchableCard
   <Pressable
     {...a11yCardProps(label)}
     hitSlop={HITSLOP_44}
-    style={({ pressed }) => [styles.base, { opacity: pressed ? 0.9 : 1 }, style]}
+    style={({ pressed }) =>
+      [
+        styles.base,
+        { opacity: pressed ? theme.opacity.pressed : 1 },
+        style,
+      ] as StyleProp<ViewStyle>
+    }
     {...rest}
   >
     {children}
