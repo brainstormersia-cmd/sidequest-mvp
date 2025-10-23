@@ -8,6 +8,7 @@ import { GiverHeaderModel } from '../useGiverHomeState';
 export type HomeHeaderProps = {
   header: GiverHeaderModel;
   onPressProfile: () => void;
+  onPressSwitchRole: () => void;
 };
 
 const Avatar = React.memo(({ initials }: { initials: string }) => {
@@ -21,34 +22,46 @@ const Avatar = React.memo(({ initials }: { initials: string }) => {
 });
 Avatar.displayName = 'HomeHeaderAvatar';
 
-export const HomeHeader: React.FC<HomeHeaderProps> = React.memo(({ header, onPressProfile }) => {
-  const greeting = `Buongiorno, ${header.userName} 👋`;
+export const HomeHeader: React.FC<HomeHeaderProps> = React.memo(
+  ({ header, onPressProfile, onPressSwitchRole }) => {
+    const greeting = `Buongiorno, ${header.userName}`;
+    const oppositeRole = header.role === 'giver' ? 'Doer' : 'Giver';
 
-  return (
-    <View style={styles.container}>
-      <View style={styles.textBlock}>
-        <Text variant="lg" weight="bold" style={styles.greeting}>
-          {greeting}
-        </Text>
-        {header.variant === 'geolocated' && header.addressLabel ? (
-          <View style={styles.locationPill}>
-            <Text variant="xs" style={styles.locationCopy}>
-              📍 {header.addressLabel}
-            </Text>
-          </View>
-        ) : null}
+    return (
+      <View style={styles.container}>
+        <View style={styles.textBlock}>
+          <Text variant="lg" weight="bold" style={styles.greeting}>
+            {greeting}
+          </Text>
+          <Pressable
+            {...a11yButtonProps(`Passa a ${oppositeRole}`)}
+            onPress={onPressSwitchRole}
+            hitSlop={HITSLOP_44}
+            style={({ pressed }) => [styles.switchRole, pressed ? styles.switchRolePressed : null]}
+          >
+            {({ pressed }) => (
+              <Text
+                variant="xs"
+                weight="medium"
+                style={[styles.switchRoleLabel, pressed ? styles.switchRoleLabelPressed : null]}
+              >
+                {`Passa a ${oppositeRole}`}
+              </Text>
+            )}
+          </Pressable>
+        </View>
+        <Pressable
+          {...a11yButtonProps('Apri profilo')}
+          onPress={onPressProfile}
+          hitSlop={HITSLOP_44}
+          style={({ pressed }) => [styles.profileButton, pressed ? styles.profileButtonPressed : null]}
+        >
+          <Avatar initials={header.avatarInitials} />
+        </Pressable>
       </View>
-      <Pressable
-        {...a11yButtonProps('Apri profilo')}
-        onPress={onPressProfile}
-        hitSlop={HITSLOP_44}
-        style={({ pressed }) => [styles.profileButton, pressed ? styles.profileButtonPressed : null]}
-      >
-        <Avatar initials={header.avatarInitials} />
-      </Pressable>
-    </View>
-  );
-});
+    );
+  },
+);
 HomeHeader.displayName = 'HomeHeader';
 
 const styles = StyleSheet.create({
@@ -65,15 +78,17 @@ const styles = StyleSheet.create({
   greeting: {
     color: theme.colors.textPrimary,
   },
-  locationPill: {
-    alignSelf: 'flex-start',
-    borderRadius: theme.radius.full,
-    backgroundColor: theme.colors.surfaceAlt,
-    paddingHorizontal: theme.space.sm,
-    paddingVertical: theme.space.xxs,
+  switchRole: {
+    alignSelf: 'flex-end',
   },
-  locationCopy: {
+  switchRolePressed: {
+    opacity: theme.opacity.pressed,
+  },
+  switchRoleLabel: {
     color: theme.colors.textSecondary,
+  },
+  switchRoleLabelPressed: {
+    textDecorationLine: 'underline',
   },
   profileButton: {
     borderRadius: theme.radius.full,
@@ -86,8 +101,8 @@ const styles = StyleSheet.create({
     transform: [{ scale: 0.97 }],
   },
   avatar: {
-    height: theme.space['2xl'],
-    width: theme.space['2xl'],
+    height: theme.space['3xl'],
+    width: theme.space['3xl'],
     borderRadius: theme.radius.full,
     backgroundColor: theme.colors.primary,
     alignItems: 'center',

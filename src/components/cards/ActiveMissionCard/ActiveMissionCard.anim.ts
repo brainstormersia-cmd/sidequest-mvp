@@ -2,31 +2,10 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { AccessibilityInfo, Animated, Easing } from 'react-native';
 import { theme } from '../../../shared/lib/theme';
 
-const DEFAULT_DURATION = 1400;
-const SHIMMER_DURATION = 1800;
-
-const createLoop = (
-  animatedValue: Animated.Value,
-  toValue: number,
-  duration: number,
-  easing = Easing.inOut(Easing.quad),
-) =>
-  Animated.loop(
-    Animated.sequence([
-      Animated.timing(animatedValue, {
-        toValue,
-        duration,
-        easing,
-        useNativeDriver: true,
-      }),
-      Animated.timing(animatedValue, {
-        toValue: 0,
-        duration,
-        easing,
-        useNativeDriver: true,
-      }),
-    ]),
-  );
+const DOT_PULSE_DURATION = 1500;
+const SHEEN_PASS_DURATION = 800;
+const SHEEN_CYCLE_DURATION = 7200;
+const PROGRESS_CHASE_DURATION = 2200;
 
 const useReduceMotion = () => {
   const [reduceMotionEnabled, setReduceMotionEnabled] = useState(false);
@@ -75,48 +54,79 @@ export const useActiveMissionAnim = ({
 
   const pulseDriver = useRef(new Animated.Value(0)).current;
   const shimmerDriver = useRef(new Animated.Value(0)).current;
-  const driftDriver = useRef(new Animated.Value(0)).current;
+  const progressDriver = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     if (!shouldAnimate) {
       pulseDriver.stopAnimation();
       shimmerDriver.stopAnimation();
-      driftDriver.stopAnimation();
+      progressDriver.stopAnimation();
       pulseDriver.setValue(0);
       shimmerDriver.setValue(0);
-      driftDriver.setValue(0);
+      progressDriver.setValue(0);
       return;
     }
 
-    const pulseAnimation = createLoop(pulseDriver, 1, DEFAULT_DURATION);
-    const shimmerAnimation = Animated.loop(
+    const pulseAnimation = Animated.loop(
       Animated.sequence([
-        Animated.timing(shimmerDriver, {
+        Animated.timing(pulseDriver, {
           toValue: 1,
-          duration: SHIMMER_DURATION,
+          duration: DOT_PULSE_DURATION / 2,
           easing: Easing.inOut(Easing.quad),
           useNativeDriver: true,
         }),
-        Animated.timing(shimmerDriver, {
+        Animated.timing(pulseDriver, {
           toValue: 0,
-          duration: SHIMMER_DURATION,
+          duration: DOT_PULSE_DURATION / 2,
           easing: Easing.inOut(Easing.quad),
           useNativeDriver: true,
         }),
       ]),
     );
-    const driftAnimation = createLoop(driftDriver, 1, DEFAULT_DURATION + 200);
+
+    const shimmerAnimation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(shimmerDriver, {
+          toValue: 1,
+          duration: SHEEN_PASS_DURATION,
+          easing: Easing.inOut(Easing.quad),
+          useNativeDriver: true,
+        }),
+        Animated.timing(shimmerDriver, {
+          toValue: 0,
+          duration: 0,
+          useNativeDriver: true,
+        }),
+        Animated.delay(SHEEN_CYCLE_DURATION - SHEEN_PASS_DURATION),
+      ]),
+    );
+
+    const progressAnimation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(progressDriver, {
+          toValue: 1,
+          duration: PROGRESS_CHASE_DURATION,
+          easing: Easing.inOut(Easing.quad),
+          useNativeDriver: true,
+        }),
+        Animated.timing(progressDriver, {
+          toValue: 0,
+          duration: 0,
+          useNativeDriver: true,
+        }),
+      ]),
+    );
 
     pulseAnimation.start();
     shimmerAnimation.start();
-    driftAnimation.start();
+    progressAnimation.start();
 
     return () => {
       pulseAnimation.stop();
       shimmerAnimation.stop();
-      driftAnimation.stop();
+      progressAnimation.stop();
     };
-  }, [driftDriver, pulseDriver, shimmerDriver, shouldAnimate]);
+  }, [progressDriver, pulseDriver, shimmerDriver, shouldAnimate]);
 
   const badgeStyle = useMemo(
     () => ({
@@ -124,13 +134,13 @@ export const useActiveMissionAnim = ({
         {
           scale: pulseDriver.interpolate({
             inputRange: [0, 1],
-            outputRange: [1, 1.05],
+            outputRange: [1, 1.08],
           }),
         },
       ],
       opacity: pulseDriver.interpolate({
         inputRange: [0, 1],
-        outputRange: [0.6, 1],
+        outputRange: [0.4, 0.85],
       }),
     }),
     [pulseDriver],
@@ -143,38 +153,42 @@ export const useActiveMissionAnim = ({
           translateX: shimmerDriver.interpolate({
             inputRange: [0, 1],
             outputRange: [
-              -theme.spacing.lg,
-              theme.spacing['4xl'],
+              -theme.spacing['5xl'],
+              theme.spacing['5xl'] * 1.4,
             ],
           }),
         },
       ],
       opacity: shimmerDriver.interpolate({
         inputRange: [0, 1],
-        outputRange: [0, 0.4],
+        outputRange: [0, 0.08],
       }),
     }),
     [shimmerDriver],
   );
 
-  const containerStyle = useMemo(
+  const progressOverlayStyle = useMemo(
     () => ({
       transform: [
         {
-          translateX: driftDriver.interpolate({
+          translateX: progressDriver.interpolate({
             inputRange: [0, 1],
-            outputRange: [0, theme.spacing.xxs],
+            outputRange: [-theme.spacing.lg, theme.spacing.lg],
           }),
         },
       ],
+      opacity: progressDriver.interpolate({
+        inputRange: [0, 1],
+        outputRange: [0, 0.1],
+      }),
     }),
-    [driftDriver],
+    [progressDriver],
   );
 
   return {
     badgeStyle,
     sheenStyle,
-    containerStyle,
+    progressOverlayStyle,
     shouldReduceMotion: reduceMotion,
   } as const;
 };

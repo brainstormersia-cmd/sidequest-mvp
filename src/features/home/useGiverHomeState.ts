@@ -5,6 +5,7 @@ export type GiverHeaderModel = {
   userName: string;
   addressLabel?: string;
   avatarInitials: string;
+  role: 'giver' | 'doer';
 };
 
 export type ActiveMissionModel = {
@@ -14,7 +15,7 @@ export type ActiveMissionModel = {
   statusTone: 'success' | 'warning' | 'review' | 'muted';
   etaLabel: string;
   etaMinutes: number;
-  etaTone: 'success' | 'review';
+  etaTone: 'success' | 'review' | 'warning';
   doerName: string;
   doerSummary: string;
   doerAvatarInitials: string;
@@ -139,6 +140,7 @@ export const useGiverHomeState = () => {
         userName: 'Sara',
         addressLabel: 'Via Emilio Scajone 12',
         avatarInitials: 'SA',
+        role: 'giver',
       },
       activeMission: {
         id: 'active-1',

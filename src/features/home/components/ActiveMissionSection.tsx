@@ -20,10 +20,11 @@ export const ActiveMissionSection: React.FC<ActiveMissionSectionProps> = React.m
         <ActiveMissionCard
           role={mission.role}
           etaMinutes={mission.etaMinutes}
+          etaTone={mission.etaTone}
           statusLabel={mission.statusLabel}
           statusTone={mission.statusTone}
           title={mission.doerName}
-          subtitle={`${mission.doerSummary} • ${mission.etaLabel}`}
+          subtitle={mission.doerSummary}
           progress={mission.progress}
           progressLabel={mission.progressLabel}
           avatarInitials={mission.doerAvatarInitials}
@@ -36,9 +37,9 @@ export const ActiveMissionSection: React.FC<ActiveMissionSectionProps> = React.m
           {...a11yButtonProps('Visualizza tutte le missioni attive')}
           onPress={onPressViewAll}
           hitSlop={HITSLOP_44}
-          style={({ pressed }) => [styles.viewAllButton, pressed ? styles.viewAllButtonPressed : null]}
+          style={({ pressed }) => [styles.viewAllLink, pressed ? styles.viewAllLinkPressed : null]}
         >
-          <Text variant="sm" weight="medium" style={styles.viewAllButtonLabel}>
+          <Text variant="sm" weight="medium" style={styles.viewAllLinkLabel}>
             Visualizza tutte →
           </Text>
         </Pressable>
@@ -52,19 +53,13 @@ const styles = StyleSheet.create({
   container: {
     gap: theme.space.sm,
   },
-  viewAllButton: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: theme.space.xs,
-    paddingVertical: theme.space.xxs,
-    borderRadius: theme.radius.md,
-    backgroundColor: theme.colors.surface,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
+  viewAllLink: {
+    alignSelf: 'flex-end',
   },
-  viewAllButtonPressed: {
+  viewAllLinkPressed: {
     opacity: theme.opacity.pressed,
   },
-  viewAllButtonLabel: {
+  viewAllLinkLabel: {
     color: theme.colors.primary,
   },
 });

@@ -1,7 +1,8 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   Animated,
+  Easing,
   Pressable,
   StyleSheet,
   View,
@@ -13,6 +14,7 @@ import { useActiveMissionAnim } from './ActiveMissionCard.anim';
 import { ActiveMissionCardProps } from './ActiveMissionCard.types';
 
 const AnimatedView = Animated.createAnimatedComponent(View);
+const AnimatedText = Animated.createAnimatedComponent(Text);
 
 const withOpacity = (hexColor: string, alpha: number) => {
   const sanitized = hexColor.replace('#', '');
@@ -42,10 +44,33 @@ const statusToneToColor = (tone: ActiveMissionCardProps['statusTone']) => {
   }
 };
 
+const etaToneToColor = (tone: ActiveMissionCardProps['etaTone']) => {
+  switch (tone) {
+    case 'success':
+      return theme.colors.success;
+    case 'warning':
+      return theme.colors.warning;
+    case 'review':
+      return theme.colors.accent;
+    default:
+      return theme.colors.textSecondary;
+  }
+};
+
+const formatEtaLabel = (targetTime: number) => {
+  const diffMs = Math.max(0, targetTime - Date.now());
+  const diffMinutes = Math.ceil(diffMs / 60000);
+  if (diffMinutes <= 1) {
+    return '≈ 1 min';
+  }
+  return `≈ ${diffMinutes} min`;
+};
+
 export const ActiveMissionCard: React.FC<ActiveMissionCardProps> = React.memo(
   ({
     role,
     etaMinutes,
+    etaTone = 'success',
     statusLabel,
     statusTone = 'success',
     title,
@@ -58,33 +83,73 @@ export const ActiveMissionCard: React.FC<ActiveMissionCardProps> = React.memo(
     visible = true,
     avatarInitials,
   }) => {
-    const { badgeStyle, sheenStyle, containerStyle, shouldReduceMotion } = useActiveMissionAnim({
+    const { badgeStyle, sheenStyle, progressOverlayStyle, shouldReduceMotion } = useActiveMissionAnim({
       playState,
       visible,
     });
 
     const gradientColors = useMemo<Readonly<[string, string]>>(
-      () => [withOpacity(theme.colors.textPrimary, 0.9), withOpacity(theme.colors.textPrimary, 0.82)] as const,
+      () => ['#0B0C0E', '#2C2C2E'] as const,
       [],
     );
 
-    const etaLabel = useMemo(() => `≈ ${etaMinutes} min`, [etaMinutes]);
+    const etaTargetTime = useMemo(() => Date.now() + etaMinutes * 60 * 1000, [etaMinutes]);
+    const [etaLabel, setEtaLabel] = useState(() => formatEtaLabel(etaTargetTime));
+
+    useEffect(() => {
+      setEtaLabel(formatEtaLabel(etaTargetTime));
+    }, [etaTargetTime]);
+
+    useEffect(() => {
+      const intervalId = setInterval(() => {
+        setEtaLabel(formatEtaLabel(etaTargetTime));
+      }, 30000);
+
+      return () => clearInterval(intervalId);
+    }, [etaTargetTime]);
+
+    const statusAnimation = useRef(new Animated.Value(1)).current;
+    const [displayStatus, setDisplayStatus] = useState(statusLabel);
+
+    useEffect(() => {
+      if (statusLabel === displayStatus) {
+        return;
+      }
+      Animated.timing(statusAnimation, {
+        toValue: 0,
+        duration: 200,
+        easing: Easing.inOut(Easing.quad),
+        useNativeDriver: true,
+      }).start(() => {
+        setDisplayStatus(statusLabel);
+        statusAnimation.setValue(0);
+        Animated.timing(statusAnimation, {
+          toValue: 1,
+          duration: 200,
+          easing: Easing.inOut(Easing.quad),
+          useNativeDriver: true,
+        }).start();
+      });
+    }, [displayStatus, statusAnimation, statusLabel]);
+
     const clampedProgress = useMemo(() => Math.max(0, Math.min(1, progress)), [progress]);
 
     const statusColor = useMemo(() => statusToneToColor(statusTone), [statusTone]);
+    const etaColor = useMemo(() => etaToneToColor(etaTone), [etaTone]);
 
     return (
-      <AnimatedView style={[styles.wrapper, containerStyle, !visible && styles.hidden]}>
+      <AnimatedView style={[styles.wrapper, !visible && styles.hidden]}>
         <Pressable
           {...(onPress ? a11yButtonProps(roleLabels[role]) : {})}
           onPress={onPress}
           style={({ pressed }) => [styles.pressable, pressed ? styles.pressablePressed : null]}
         >
           <LinearGradient colors={gradientColors} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} style={styles.card}>
+            {!shouldReduceMotion ? <Animated.View pointerEvents="none" style={[styles.sheen, sheenStyle]} /> : null}
             <Pressable
               {...(onPressChat ? a11yButtonProps('Apri chat missione') : {})}
               onPress={onPressChat}
-              hitSlop={HITSLOP_44}
+              hitSlop={{ top: theme.space.xs, bottom: theme.space.xs, left: theme.space.xs, right: theme.space.xs }}
               style={({ pressed }) => [styles.chatButton, pressed ? styles.chatButtonPressed : null]}
             >
               <Text variant="sm" weight="bold" style={styles.chatIcon}>
@@ -94,37 +159,62 @@ export const ActiveMissionCard: React.FC<ActiveMissionCardProps> = React.memo(
 
             <View style={styles.topRow}>
               <Animated.View style={[styles.statusBadge, badgeStyle]} />
-              <Text variant="sm" weight="medium" style={[styles.statusLabel, { color: statusColor }]}>
-                {statusLabel}
-              </Text>
-              <Text variant="xs" style={styles.etaLabel}>
-                {etaLabel}
-              </Text>
+              <AnimatedText
+                variant="xs"
+                weight="medium"
+                style={[
+                  styles.statusLabel,
+                  {
+                    color: statusColor,
+                    opacity: statusAnimation,
+                    transform: [
+                      {
+                        translateY: statusAnimation.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [theme.space.xxs, 0],
+                        }),
+                      },
+                    ],
+                  },
+                ]}
+              >
+                {displayStatus}
+              </AnimatedText>
             </View>
 
             <View style={styles.middleRow}>
-              {avatarInitials ? (
-                <View style={styles.avatar}>
-                  <Text variant="sm" weight="bold" style={styles.avatarText}>
-                    {avatarInitials}
+              <View style={styles.infoColumn}>
+                <Text variant="sm" weight="medium" style={styles.subtitle}>
+                  {subtitle}
+                </Text>
+                <View style={styles.timeRow}>
+                  <Text variant="xs" style={styles.timeIcon}>
+                    ⏱
+                  </Text>
+                  <Text variant="xs" weight="medium" style={[styles.timeLabel, { color: etaColor }]}>
+                    {etaLabel}
                   </Text>
                 </View>
-              ) : null}
-              <View style={styles.titles}>
-                <Text variant="md" weight="bold" style={styles.title}>
+              </View>
+              <View style={styles.avatarColumn}>
+                {avatarInitials ? (
+                  <View style={styles.avatar}>
+                    <Text variant="sm" weight="bold" style={styles.avatarText}>
+                      {avatarInitials}
+                    </Text>
+                  </View>
+                ) : null}
+                <Text variant="sm" weight="medium" style={styles.title}>
                   {title}
-                </Text>
-                <Text variant="sm" style={styles.subtitle}>
-                  {subtitle}
                 </Text>
               </View>
             </View>
 
             <View style={styles.bottomRow}>
               <View style={styles.progressTrack}>
-                <View style={[styles.progressFill, { flex: clampedProgress }]}>
+                <View style={[styles.progressFill, { flex: clampedProgress || Number.EPSILON }]}>
                   {!shouldReduceMotion ? (
-                    <Animated.View style={[styles.progressSheen, sheenStyle]} />
+                    <Animated.View style={[styles.progressOverlay, progressOverlayStyle]} />
                   ) : null}
                 </View>
                 <View style={{ flex: 1 - clampedProgress }} />
@@ -154,24 +244,46 @@ const styles = StyleSheet.create({
   pressable: {
     borderRadius: theme.radius.lg,
     overflow: 'hidden',
+    shadowColor: '#000000',
+    shadowOpacity: 0.28,
+    shadowOffset: { width: 0, height: 12 },
+    shadowRadius: 24,
+    elevation: theme.elevation.level2,
   },
   pressablePressed: {
     opacity: theme.opacity.pressed,
   },
   card: {
     paddingVertical: theme.spacing.md,
-    paddingHorizontal: theme.spacing.md,
+    paddingLeft: theme.spacing.md,
+    paddingRight: theme.spacing.md + theme.spacing['3xl'],
     borderRadius: theme.radius.lg,
     overflow: 'hidden',
     gap: theme.spacing.md,
+    borderWidth: 1,
+    borderColor: '#2C2C2E',
+    position: 'relative',
+  },
+  sheen: {
+    position: 'absolute',
+    top: -theme.spacing['2xl'],
+    left: -theme.spacing['4xl'],
+    width: theme.spacing['5xl'],
+    height: theme.spacing['5xl'] * 2.2,
+    backgroundColor: theme.colors.onPrimary,
+    transform: [{ rotate: '18deg' }],
   },
   chatButton: {
     position: 'absolute',
     top: theme.spacing.sm,
     right: theme.spacing.sm,
     borderRadius: theme.radius.full,
-    padding: theme.spacing.xs,
-    backgroundColor: withOpacity(theme.colors.onPrimary, 0.12),
+    backgroundColor: withOpacity(theme.colors.onPrimary, 0.18),
+    height: theme.spacing['4xl'] - theme.spacing.sm,
+    width: theme.spacing['4xl'] - theme.spacing.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 2,
   },
   chatButtonPressed: {
     opacity: theme.opacity.pressed,
@@ -183,6 +295,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: theme.spacing.xs,
+    paddingRight: theme.spacing.md + theme.spacing['3xl'],
   },
   statusBadge: {
     width: theme.spacing.xs,
@@ -193,18 +306,38 @@ const styles = StyleSheet.create({
   statusLabel: {
     flexShrink: 0,
   },
-  etaLabel: {
-    marginLeft: 'auto',
-    color: withOpacity(theme.colors.onPrimary, 0.72),
-  },
   middleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.sm,
+    gap: theme.spacing.md,
+  },
+  infoColumn: {
+    flex: 1,
+    gap: theme.spacing.xs,
+  },
+  timeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.xxs,
+  },
+  timeIcon: {
+    color: withOpacity(theme.colors.onPrimary, 0.6),
+  },
+  timeLabel: {
+    letterSpacing: 0.2,
+  },
+  subtitle: {
+    color: withOpacity(theme.colors.onPrimary, 0.72),
+  },
+  avatarColumn: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: theme.spacing.xs,
+    minWidth: theme.spacing['3xl'],
   },
   avatar: {
-    minHeight: theme.spacing['2xl'],
-    minWidth: theme.spacing['2xl'],
+    height: theme.spacing['3xl'],
+    width: theme.spacing['3xl'],
     borderRadius: theme.radius.full,
     backgroundColor: withOpacity(theme.colors.onPrimary, 0.16),
     alignItems: 'center',
@@ -213,15 +346,8 @@ const styles = StyleSheet.create({
   avatarText: {
     color: theme.colors.onPrimary,
   },
-  titles: {
-    flex: 1,
-    gap: theme.spacing.xs,
-  },
   title: {
     color: theme.colors.onPrimary,
-  },
-  subtitle: {
-    color: withOpacity(theme.colors.onPrimary, 0.72),
   },
   bottomRow: {
     flexDirection: 'row',
@@ -242,12 +368,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     overflow: 'hidden',
   },
-  progressSheen: {
-    height: '100%',
+  progressOverlay: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
     width: theme.spacing.xl,
-    backgroundColor: withOpacity(theme.colors.onPrimary, 0.4),
+    backgroundColor: theme.colors.onPrimary,
   },
   progressLabel: {
     color: withOpacity(theme.colors.onPrimary, 0.8),
+    marginLeft: 'auto',
   },
 });
