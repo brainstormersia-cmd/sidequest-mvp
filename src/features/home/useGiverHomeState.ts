@@ -9,9 +9,11 @@ export type GiverHeaderModel = {
 
 export type ActiveMissionModel = {
   id: string;
+  role: 'courier' | 'quester' | 'doer';
   statusLabel: string;
   statusTone: 'success' | 'warning' | 'review' | 'muted';
   etaLabel: string;
+  etaMinutes: number;
   etaTone: 'success' | 'review';
   doerName: string;
   doerSummary: string;
@@ -140,9 +142,11 @@ export const useGiverHomeState = () => {
       },
       activeMission: {
         id: 'active-1',
+        role: 'courier',
         statusLabel: 'Sta arrivando',
         statusTone: 'success',
         etaLabel: '⏱ 17:35',
+        etaMinutes: 12,
         etaTone: 'success',
         doerName: 'Peter Parker',
         doerSummary: 'Ritirando ordine',
