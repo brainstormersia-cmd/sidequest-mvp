@@ -8,12 +8,13 @@ import {
   ReturningSection,
 } from './components';
 import { theme } from '../../shared/lib/theme';
-import { GiverHomeState } from './useGiverHomeState';
+import { ActiveMissionModel, GiverHomeState } from './useGiverHomeState';
 
 export type HomeGiverSectionProps = {
   state: GiverHomeState;
   onCreateMission: () => void;
-  onOpenMission: (missionId: string) => void;
+  onOpenActiveMission: (mission: ActiveMissionModel) => void;
+  onOpenRecentMission: (missionId: string) => void;
   onOpenChat: (missionId: string) => void;
   onViewAllActive: () => void;
   onOpenExamples: () => void;
@@ -23,7 +24,8 @@ export type HomeGiverSectionProps = {
 export const HomeGiverSection: React.FC<HomeGiverSectionProps> = ({
   state,
   onCreateMission,
-  onOpenMission,
+  onOpenActiveMission,
+  onOpenRecentMission,
   onOpenChat,
   onViewAllActive,
   onOpenExamples,
@@ -37,9 +39,9 @@ export const HomeGiverSection: React.FC<HomeGiverSectionProps> = ({
   const handlePressRecentMission = useCallback(
     (missionId: string) => {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => undefined);
-      onOpenMission(missionId);
+      onOpenRecentMission(missionId);
     },
-    [onOpenMission],
+    [onOpenRecentMission],
   );
 
   const handleLongPressRecent = useCallback(
@@ -58,8 +60,10 @@ export const HomeGiverSection: React.FC<HomeGiverSectionProps> = ({
       return;
     }
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => undefined);
-    onOpenMission(activeMissionId);
-  }, [activeMissionId, onOpenMission]);
+    if (activeMission) {
+      onOpenActiveMission(activeMission);
+    }
+  }, [activeMission, activeMissionId, onOpenActiveMission]);
 
   const handlePressActiveChat = useCallback(() => {
     if (!activeMissionId) {

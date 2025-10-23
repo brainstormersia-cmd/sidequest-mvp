@@ -4,10 +4,12 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { OnboardingScreen } from '../features/onboarding/OnboardingScreen';
 import { HomeScreen } from '../features/home/HomeScreen';
 import { MissionListScreen } from '../features/missions/MissionListScreen';
+import { MissionSummaryScreen } from '../features/missions/MissionSummaryScreen';
 import { EventsScreen } from '../features/events/EventsScreen';
 import { ProfileScreen } from '../features/profile/ProfileScreen';
 import { strings } from '../config/strings';
 import { ONBOARDING_STORAGE_KEY } from '../shared/lib/device';
+import { ActiveMissionModel } from '../features/home/useGiverHomeState';
 
 export type RootStackParamList = {
   Onboarding: undefined;
@@ -15,6 +17,7 @@ export type RootStackParamList = {
   Missions: undefined;
   Events: undefined;
   Profile: undefined;
+  MissionSummary: { mission: ActiveMissionModel };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -67,6 +70,11 @@ export const RootNavigator = () => {
         name="Profile"
         component={ProfileScreen}
         options={{ headerShown: true, title: strings.profile.title }}
+      />
+      <Stack.Screen
+        name="MissionSummary"
+        component={MissionSummaryScreen}
+        options={{ headerShown: false, presentation: 'fullScreenModal' }}
       />
     </Stack.Navigator>
   );
