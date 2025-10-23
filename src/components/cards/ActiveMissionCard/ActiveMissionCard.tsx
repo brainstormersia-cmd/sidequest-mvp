@@ -48,6 +48,12 @@ const clampProgress = (value: number) => {
   return Math.max(0, Math.min(1, value));
 };
 
+const toTitleCase = (value: string) =>
+  value
+    .split(' ')
+    .map((word) => (word.length ? word[0].toUpperCase() + word.slice(1) : word))
+    .join(' ');
+
 const ChatGlyph = () => (
   <View style={styles.chatGlyph}>
     <View style={styles.chatBubble} />
@@ -186,6 +192,8 @@ export const ActiveMissionCard: React.FC<ActiveMissionCardProps> = React.memo(
       } as const;
     }, [progressDriver, trackWidth]);
 
+    const statusHeadlineLabel = useMemo(() => toTitleCase(statusLabel), [statusLabel]);
+
     return (
       <AnimatedPressable
         {...a11yButtonProps(`Missione attiva con ${title}`)}
@@ -198,15 +206,20 @@ export const ActiveMissionCard: React.FC<ActiveMissionCardProps> = React.memo(
         style={[styles.wrapper, animatedCardStyle]}
       >
         <LinearGradient
-          colors={['rgba(14,17,23,0.96)', 'rgba(23,27,35,0.96)']}
+          colors={['#0E1117F5', '#171B23F5']}
           start={{ x: 0, y: 0 }}
           end={{ x: 0, y: 1 }}
           style={styles.card}
         >
-          <Animated.View style={[styles.cardContent, { opacity: contentDriver }]}> 
+          <Animated.View style={[styles.cardContent, { opacity: contentDriver }]}>
             <View style={styles.headerRow}>
-              <Text variant="sm" weight="medium" style={[styles.statusLabel, { color: statusColor }]} numberOfLines={1}>
-                {statusLabel}
+              <Text
+                variant="sm"
+                weight="medium"
+                style={[styles.statusTag, { color: statusColor }]}
+                numberOfLines={1}
+              >
+                🟢 {statusLabel}
               </Text>
               <View style={styles.headerMeta}>
                 <Text
@@ -215,7 +228,7 @@ export const ActiveMissionCard: React.FC<ActiveMissionCardProps> = React.memo(
                   style={[styles.timerLabel, { color: timerColor }]}
                   numberOfLines={1}
                 >
-                  {timerLabel}
+                  ⏱ {timerLabel}
                 </Text>
                 {onPressChat ? (
                   <Pressable
@@ -230,11 +243,24 @@ export const ActiveMissionCard: React.FC<ActiveMissionCardProps> = React.memo(
               </View>
             </View>
 
-            <View style={styles.identityRow}>
-              {avatarInitials ? (
-                <View style={styles.avatar}>
-                  <Text variant="sm" weight="bold" style={styles.avatarText}>
-                    {avatarInitials}
+            <View style={styles.identityBlock}>
+              <Text variant="lg" weight="medium" style={styles.statusHeadline} numberOfLines={1}>
+                {statusHeadlineLabel}
+              </Text>
+              <View style={styles.identityRow}>
+                {avatarInitials ? (
+                  <View style={styles.avatar}>
+                    <Text variant="sm" weight="bold" style={styles.avatarText}>
+                      {avatarInitials}
+                    </Text>
+                  </View>
+                ) : null}
+                <View style={styles.identityText}>
+                  <Text variant="md" weight="bold" style={styles.doerName} numberOfLines={1}>
+                    {title}
+                  </Text>
+                  <Text variant="sm" style={styles.doerSummary} numberOfLines={1}>
+                    {subtitle}
                   </Text>
                 </View>
               ) : null}
@@ -246,14 +272,6 @@ export const ActiveMissionCard: React.FC<ActiveMissionCardProps> = React.memo(
                   {subtitle}
                 </Text>
               </View>
-            ) : null}
-            <View style={styles.identityText}>
-              <Text variant="lg" weight="bold" style={styles.doerName} numberOfLines={1}>
-                {title}
-              </Text>
-              <Text variant="sm" style={styles.doerSummary} numberOfLines={2}>
-                {subtitle}
-              </Text>
             </View>
           </View>
 
@@ -295,8 +313,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  statusLabel: {
-    letterSpacing: 0.1,
+  statusTag: {
+    letterSpacing: 0.2,
+    flexShrink: 1,
+  },
+  identityBlock: {
+    gap: theme.space.md,
   },
   headerMeta: {
     flexDirection: 'row',
@@ -314,8 +336,8 @@ const styles = StyleSheet.create({
     opacity: theme.opacity.pressed,
   },
   chatGlyph: {
-    width: 18,
-    height: 18,
+    width: 20,
+    height: 20,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -334,6 +356,12 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.82)',
     borderBottomRightRadius: theme.radius.sm,
     transform: [{ translateY: -2 }, { translateX: -3 }, { rotate: '45deg' }],
+  },
+  statusHeadline: {
+    color: 'rgba(255,255,255,0.96)',
+    letterSpacing: 0.2,
+    fontSize: theme.typography.lg,
+    lineHeight: theme.typography.lg * 1.05,
   },
   identityRow: {
     flexDirection: 'row',
@@ -370,7 +398,7 @@ const styles = StyleSheet.create({
   },
   progressTrack: {
     flex: 1,
-    height: 8,
+    height: 7,
     borderRadius: theme.radius.full,
     backgroundColor: '#222832',
     overflow: 'hidden',
@@ -388,5 +416,6 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.68)',
     textAlign: 'right',
     minWidth: 84,
+    flexShrink: 0,
   },
 });

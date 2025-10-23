@@ -66,6 +66,12 @@ const clampProgress = (value: number) => {
   return Math.max(0, Math.min(1, value));
 };
 
+const toTitleCase = (value: string) =>
+  value
+    .split(' ')
+    .map((word) => (word.length ? word[0].toUpperCase() + word.slice(1) : word))
+    .join(' ');
+
 const ActionButton = ({
   label,
   tone,
@@ -115,6 +121,7 @@ export const MissionSummaryScreen = () => {
   const actionsDriver = useRef(new Animated.Value(reduceMotion ? 1 : 0)).current;
   const progressDriver = useRef(new Animated.Value(0)).current;
   const [trackWidth, setTrackWidth] = useState(0);
+  const [topBarHeight, setTopBarHeight] = useState(0);
 
   useEffect(() => {
     if (reduceMotion) {
@@ -179,10 +186,11 @@ export const MissionSummaryScreen = () => {
 
   const statusColor = statusToneToColor(mission.statusTone);
   const etaColor = etaToneToColor(mission.etaTone);
+  const statusHeadline = useMemo(() => toTitleCase(mission.statusLabel), [mission.statusLabel]);
   const accessibilityLabel = useMemo(
     () =>
-      `${mission.statusLabel}, arrivo previsto in ${etaFullLabel}, progresso ${mission.progressLabel}`,
-    [etaFullLabel, mission.progressLabel, mission.statusLabel],
+      `${statusHeadline}, arrivo previsto in ${etaFullLabel}, progresso ${mission.progressLabel}`,
+    [etaFullLabel, mission.progressLabel, statusHeadline],
   );
 
   const handleClose = () => {
@@ -203,7 +211,7 @@ export const MissionSummaryScreen = () => {
   };
 
   return (
-    <LinearGradient colors={['rgba(14,17,23,0.96)', 'rgba(23,27,35,0.96)']} style={styles.gradient}>
+    <LinearGradient colors={['#0E1117FF', '#171B23F2']} style={styles.gradient}>
       <StatusBar style="light" />
       <View style={styles.safe}>
         <AnimatedView
@@ -219,15 +227,22 @@ export const MissionSummaryScreen = () => {
               paddingHorizontal: theme.space['2xl'],
             },
           ]}
+          onLayout={(event) => setTopBarHeight(event.nativeEvent.layout.height)}
         >
-          <View style={styles.topBarBackdrop} pointerEvents="none" />
+          <LinearGradient
+            colors={['rgba(14,17,23,0.88)', 'rgba(23,27,35,0.6)']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 0, y: 1 }}
+            style={styles.topBarBackdrop}
+            pointerEvents="none"
+          />
           <View style={styles.topBarContent}>
             <Text variant="sm" weight="medium" style={[styles.statusLabel, { color: statusColor }]} numberOfLines={1}>
-              {mission.statusLabel}
+              🟢 {statusHeadline}
             </Text>
             <View style={styles.topBarMeta}>
               <Text variant="sm" weight="medium" style={[styles.etaLabel, { color: etaColor }]} numberOfLines={1}>
-                {etaFullLabel}
+                ⏱ {etaFullLabel}
               </Text>
               <Pressable
                 accessibilityLabel="Chiudi riepilogo missione"
@@ -249,7 +264,7 @@ export const MissionSummaryScreen = () => {
           contentContainerStyle={[
             styles.scrollContent,
             {
-              paddingTop: insets.top + theme.space['5xl'],
+              paddingTop: (topBarHeight || insets.top + theme.space['5xl']) + theme.space.xl,
               paddingBottom: insets.bottom + theme.space['6xl'],
               paddingHorizontal: theme.space['2xl'],
             },
@@ -257,7 +272,12 @@ export const MissionSummaryScreen = () => {
           showsVerticalScrollIndicator={false}
         >
           <AnimatedView style={[styles.glassCardWrapper, buildSectionStyle(cardDriver)]}>
-            <View style={styles.glassCardSurface}>
+            <LinearGradient
+              colors={['rgba(255,255,255,0.14)', 'rgba(255,255,255,0.04)']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.glassCardSurface}
+            >
               <View style={styles.glassCardBackdrop} pointerEvents="none" />
               <View style={styles.glassCardContent}>
                 <View style={styles.profileRow}>
@@ -339,7 +359,7 @@ export const MissionSummaryScreen = () => {
                   })}
                 </View>
               </View>
-            </View>
+            </LinearGradient>
           </AnimatedView>
         </AnimatedScrollView>
 
@@ -407,7 +427,6 @@ const styles = StyleSheet.create({
   },
   topBarBackdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(14,17,23,0.68)',
   },
   topBarContent: {
     flexDirection: 'row',
@@ -415,7 +434,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   statusLabel: {
-    letterSpacing: 0.1,
+    letterSpacing: 0.2,
   },
   topBarMeta: {
     flexDirection: 'row',
@@ -449,12 +468,12 @@ const styles = StyleSheet.create({
     ...theme.shadow.soft,
   },
   glassCardSurface: {
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderRadius: theme.radius.xl,
     overflow: 'hidden',
   },
   glassCardBackdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255,255,255,0.12)',
+    backgroundColor: 'rgba(255,255,255,0.08)',
   },
   glassCardContent: {
     padding: theme.space['2xl'],
