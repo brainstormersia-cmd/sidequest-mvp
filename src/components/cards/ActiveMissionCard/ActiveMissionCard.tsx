@@ -263,8 +263,17 @@ export const ActiveMissionCard: React.FC<ActiveMissionCardProps> = React.memo(
                     {subtitle}
                   </Text>
                 </View>
+              ) : null}
+              <View style={styles.identityText}>
+                <Text variant="lg" weight="bold" style={styles.doerName} numberOfLines={1}>
+                  {title}
+                </Text>
+                <Text variant="sm" style={styles.doerSummary} numberOfLines={2}>
+                  {subtitle}
+                </Text>
               </View>
             </View>
+          </View>
 
             <View style={styles.progressBlock}>
               <View style={styles.progressTrack} onLayout={handleTrackLayout}>
