@@ -421,6 +421,24 @@ export const ActiveMissionCard: React.FC<ActiveMissionCardProps> = React.memo(
                   <Text variant="sm" style={styles.doerSummary} numberOfLines={2}>
                     {subtitle}
                   </Text>
+                  {statusUpdate ? (
+                    <Animated.View style={[styles.statusUpdate, statusAnimatedStyle]}>
+                      <Text
+                        variant="xs"
+                        style={[
+                          styles.statusUpdateLabel,
+                          statusUpdate.phase === 'completed'
+                            ? styles.statusUpdateCompleted
+                            : statusUpdate.phase === 'current'
+                            ? styles.statusUpdateCurrent
+                            : styles.statusUpdateUpcoming,
+                        ]}
+                        numberOfLines={1}
+                      >
+                        {statusUpdate.label}
+                      </Text>
+                    </Animated.View>
+                  ) : null}
                 </View>
               </View>
 
