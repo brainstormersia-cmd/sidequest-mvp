@@ -643,6 +643,7 @@ const styles = StyleSheet.create({
     borderStyle: 'dashed',
     borderWidth: 1,
     borderColor: theme.colors.border,
+    alignSelf: 'center',
   },
   exampleLabel: {
     color: theme.colors.textSubtle,
