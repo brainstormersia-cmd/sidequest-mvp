@@ -83,8 +83,8 @@ const buildTimeline = (roadmap: ActiveMissionCardProps['roadmap']): TimelineStep
   });
 };
 
-const ROTATION_DELAY = 3400;
-const TRANSITION_DURATION = theme.motion.duration.base;
+const ROTATION_DELAY = 8000;
+const TRANSITION_DURATION = theme.motion.duration.slow;
 
 export const ActiveMissionCard: React.FC<ActiveMissionCardProps> = React.memo(
   ({
@@ -132,18 +132,26 @@ export const ActiveMissionCard: React.FC<ActiveMissionCardProps> = React.memo(
     }, [rotationSteps.length]);
 
     useEffect(() => {
-      if (reduceMotion || rotationSteps.length <= 1) {
-        updateDriver.setValue(1);
+      if (rotationTimeout.current) {
+        clearTimeout(rotationTimeout.current);
+        rotationTimeout.current = null;
+      }
+      if (rotationInterval.current) {
+        clearInterval(rotationInterval.current);
+        rotationInterval.current = null;
+      }
+      updateDriver.stopAnimation();
+      updateDriver.setValue(1);
+
+      if (reduceMotion || rotationSteps.length <= 1 || isExpanded) {
         return () => undefined;
       }
-
-      updateDriver.setValue(1);
 
       const runCycle = () => {
         Animated.timing(updateDriver, {
           toValue: 0,
           duration: TRANSITION_DURATION,
-          easing: Easing.out(Easing.cubic),
+          easing: Easing.linear,
           useNativeDriver: true,
         }).start(({ finished }) => {
           if (!finished) {
@@ -155,7 +163,7 @@ export const ActiveMissionCard: React.FC<ActiveMissionCardProps> = React.memo(
             Animated.timing(updateDriver, {
               toValue: 1,
               duration: TRANSITION_DURATION,
-              easing: Easing.out(Easing.cubic),
+              easing: Easing.linear,
               useNativeDriver: true,
             }).start();
             return next;
@@ -180,7 +188,7 @@ export const ActiveMissionCard: React.FC<ActiveMissionCardProps> = React.memo(
         updateDriver.stopAnimation();
         updateDriver.setValue(1);
       };
-    }, [reduceMotion, rotationSteps.length, updateDriver]);
+    }, [isExpanded, reduceMotion, rotationSteps.length, updateDriver]);
 
     useEffect(() => {
       if (reduceMotion) {
@@ -343,19 +351,6 @@ export const ActiveMissionCard: React.FC<ActiveMissionCardProps> = React.memo(
             end={{ x: 0, y: 1 }}
             style={styles.card}
           >
-            {onPressChat ? (
-              <Pressable
-                {...a11yButtonProps('Apri chat della missione')}
-                onPress={handlePressChat}
-                hitSlop={HITSLOP_44}
-                style={({ pressed }) => [styles.chatButton, pressed ? styles.chatButtonPressed : null]}
-              >
-                <Text variant="sm" weight="bold" style={styles.chatIcon}>
-                  💬
-                </Text>
-              </Pressable>
-            ) : null}
-
             <View style={styles.topSection}>
               <View style={styles.statusColumn}>
                 <Animated.View style={[styles.statusDot, { backgroundColor: statusColor }, dotAnimatedStyle]} />
@@ -384,37 +379,69 @@ export const ActiveMissionCard: React.FC<ActiveMissionCardProps> = React.memo(
                 </View>
               </View>
 
-              <View style={[styles.timerPill, { borderColor: etaColor }]}> 
-                <Text variant="md" weight="bold" style={[styles.timerPrimary, { color: etaColor }]} numberOfLines={1}>
-                  {etaLabel}
-                </Text>
-                {etaSubLabel ? (
-                  <Text variant="xs" style={styles.timerSecondary} numberOfLines={1}>
-                    {etaSubLabel}
+              <View style={styles.metaColumn}>
+                <View style={[styles.timerPill, { borderColor: etaColor }]}>
+                  <Text variant="md" weight="bold" style={[styles.timerPrimary, { color: etaColor }]} numberOfLines={1}>
+                    {etaLabel}
                   </Text>
+                  {etaSubLabel ? (
+                    <Text variant="xs" style={styles.timerSecondary} numberOfLines={1}>
+                      {etaSubLabel}
+                    </Text>
+                  ) : null}
+                </View>
+                {onPressChat ? (
+                  <Pressable
+                    {...a11yButtonProps('Apri chat della missione')}
+                    onPress={handlePressChat}
+                    hitSlop={HITSLOP_44}
+                    style={({ pressed }) => [styles.chatButton, pressed ? styles.chatButtonPressed : null]}
+                  >
+                    <Text variant="sm" weight="bold" style={styles.chatIcon}>
+                      💬
+                    </Text>
+                  </Pressable>
                 ) : null}
               </View>
             </View>
 
-            <View style={styles.identityBlock}>
-              {avatarInitials ? (
-                <View style={styles.avatar}>
-                  <Text variant="sm" weight="bold" style={styles.avatarText}>
-                    {avatarInitials}
+            <View style={styles.bottomSection}>
+              <View style={styles.identityBlock}>
+                {avatarInitials ? (
+                  <View style={styles.avatar}>
+                    <Text variant="sm" weight="bold" style={styles.avatarText}>
+                      {avatarInitials}
+                    </Text>
+                  </View>
+                ) : null}
+                <View style={styles.identityText}>
+                  <Text variant="lg" weight="bold" style={styles.doerName} numberOfLines={1}>
+                    {title}
                   </Text>
+                  <Text variant="sm" style={styles.doerSummary} numberOfLines={2}>
+                    {subtitle}
+                  </Text>
+                  {statusUpdate ? (
+                    <Animated.View style={[styles.statusUpdate, statusAnimatedStyle]}>
+                      <Text
+                        variant="xs"
+                        style={[
+                          styles.statusUpdateLabel,
+                          statusUpdate.phase === 'completed'
+                            ? styles.statusUpdateCompleted
+                            : statusUpdate.phase === 'current'
+                            ? styles.statusUpdateCurrent
+                            : styles.statusUpdateUpcoming,
+                        ]}
+                        numberOfLines={1}
+                      >
+                        {statusUpdate.label}
+                      </Text>
+                    </Animated.View>
+                  ) : null}
                 </View>
-              ) : null}
-              <View style={styles.identityText}>
-                <Text variant="lg" weight="bold" style={styles.doerName} numberOfLines={1}>
-                  {title}
-                </Text>
-                <Text variant="sm" style={styles.doerSummary} numberOfLines={2}>
-                  {subtitle}
-                </Text>
               </View>
-            </View>
 
-            <View style={styles.progressSection}>
               <View style={styles.progressRow}>
                 <View style={styles.progressTrack}>
                   <View style={[styles.progressFill, { width: progressWidth }]} />
@@ -497,23 +524,21 @@ const styles = StyleSheet.create({
   },
   card: {
     position: 'relative',
-    padding: theme.space.lg,
-    paddingTop: theme.space['2xl'],
+    paddingHorizontal: theme.space.xl,
+    paddingVertical: theme.space.lg,
     borderRadius: theme.radius.xl,
     borderWidth: 1,
     borderColor: '#1F2933',
-    gap: theme.space.lg,
+    gap: theme.space.md,
   },
   chatButton: {
-    position: 'absolute',
-    top: theme.space.md,
-    right: theme.space.md,
     minHeight: theme.touch.targetMin,
     minWidth: theme.touch.targetMin,
     borderRadius: theme.radius.full,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: theme.colors.surface,
+    flexShrink: 0,
   },
   chatButtonPressed: {
     opacity: theme.opacity.pressed,
@@ -526,7 +551,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     justifyContent: 'space-between',
-    gap: theme.space.lg,
+    gap: theme.space.md,
   },
   statusColumn: {
     flexDirection: 'row',
@@ -538,7 +563,6 @@ const styles = StyleSheet.create({
     width: theme.space.sm,
     height: theme.space.sm,
     borderRadius: theme.radius.full,
-    marginTop: theme.space.xxs,
   },
   statusTextBlock: {
     flex: 1,
@@ -564,6 +588,12 @@ const styles = StyleSheet.create({
   statusUpdateUpcoming: {
     color: theme.colors.textSubtle,
   },
+  metaColumn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.space.sm,
+    flexShrink: 0,
+  },
   timerPill: {
     paddingHorizontal: theme.space.md,
     paddingVertical: theme.space.xs,
@@ -573,12 +603,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: theme.space.xxs,
     backgroundColor: 'transparent',
+    flexShrink: 0,
   },
   timerPrimary: {
     color: theme.colors.onPrimary,
   },
   timerSecondary: {
     color: theme.colors.textSubtle,
+  },
+  bottomSection: {
+    gap: theme.space.md,
   },
   identityBlock: {
     flexDirection: 'row',
@@ -608,13 +642,10 @@ const styles = StyleSheet.create({
   doerSummary: {
     color: theme.colors.textSecondary,
   },
-  progressSection: {
-    gap: theme.space.sm,
-  },
   progressRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.space.md,
+    gap: theme.space.sm,
   },
   progressTrack: {
     flex: 1,
@@ -643,8 +674,8 @@ const styles = StyleSheet.create({
     opacity: 1,
   },
   detailsContent: {
-    paddingTop: theme.space.sm,
-    gap: theme.space.lg,
+    paddingTop: theme.space.md,
+    gap: theme.space.md,
   },
   timeline: {
     gap: theme.space.md,
