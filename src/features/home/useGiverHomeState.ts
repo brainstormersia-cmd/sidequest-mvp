@@ -20,12 +20,18 @@ export type ActiveMissionModel = {
   doerName: string;
   doerSummary: string;
   doerAvatarInitials: string;
+  doerRating: number;
+  doerCompletedMissions: number;
   progress: number;
   progressLabel: string;
+  missionTitle: string;
+  missionReward: string;
+  missionDescription: string;
+  missionNotes?: string;
   roadmap: Array<{
     id: string;
     label: string;
-    status: 'completed' | 'upcoming';
+    status: 'completed' | 'current' | 'upcoming';
   }>;
 };
 
@@ -160,11 +166,17 @@ export const useGiverHomeState = () => {
         doerName: 'Peter Parker',
         doerSummary: 'Ritirando ordine',
         doerAvatarInitials: 'PP',
+        doerRating: 4.8,
+        doerCompletedMissions: 32,
         progress: 0.6,
         progressLabel: '60% completato',
+        missionTitle: 'Consegna pacco Bartolini',
+        missionReward: '€25',
+        missionDescription: 'Ritiro → Destinazione • Note: lasciare al portiere.',
+        missionNotes: 'Contatta il portiere se il destinatario non risponde.',
         roadmap: [
           { id: 'checkpoint-1', label: 'Ritiro completato', status: 'completed' },
-          { id: 'checkpoint-2', label: 'In viaggio', status: 'completed' },
+          { id: 'checkpoint-2', label: 'In viaggio', status: 'current' },
           { id: 'checkpoint-3', label: 'Arrivo previsto', status: 'upcoming' },
           { id: 'checkpoint-4', label: 'Consegna al destinatario', status: 'upcoming' },
         ],
