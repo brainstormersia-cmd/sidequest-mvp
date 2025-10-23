@@ -18,47 +18,13 @@ import { Spacer } from '../../shared/ui/Spacer';
 import { theme } from '../../shared/lib/theme';
 import { useModalSheet } from '../../routes/ModalSheetProvider';
 import { CreateMissionSheet } from '../create/CreateMissionSheet';
-import { useRole, Role } from '../../shared/state/roleStore';
+import { useRole } from '../../shared/state/roleStore';
 import { HomeDoerSection } from './HomeDoerSection';
 import { HomeGiverSection } from './HomeGiverSection';
+import { HomeHeader } from './components';
 import { a11yButtonProps, HITSLOP_44 } from '../../shared/lib/a11y';
 import { useGiverHomeState } from './useGiverHomeState';
 import * as Haptics from 'expo-haptics';
-
-const RoleToggleOption = React.memo(
-  ({
-    label,
-    value,
-    isActive,
-    onPress,
-  }: {
-    label: string;
-    value: Role;
-    isActive: boolean;
-    onPress: (role: Role) => void;
-  }) => (
-    <Pressable
-      {...a11yButtonProps(label)}
-      accessibilityState={{ selected: isActive }}
-      onPress={() => onPress(value)}
-      hitSlop={HITSLOP_44}
-      style={({ pressed }) => [
-        styles.toggleOption,
-        isActive ? styles.toggleOptionActive : null,
-        pressed ? styles.toggleOptionPressed : null,
-      ]}
-    >
-      <Text
-        variant="sm"
-        weight={isActive ? 'bold' : 'medium'}
-        style={isActive ? styles.toggleTextActive : styles.toggleText}
-      >
-        {label}
-      </Text>
-    </Pressable>
-  ),
-);
-RoleToggleOption.displayName = 'RoleToggleOption';
 
 export const HomeScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -133,6 +99,10 @@ export const HomeScreen = () => {
     [openCreateMissionSheet],
   );
 
+  const handleSwitchRole = React.useCallback(() => {
+    setRole(role === 'giver' ? 'doer' : 'giver');
+  }, [role, setRole]);
+
   useEffect(() => {
     Animated.timing(stickyCta, {
       toValue: role === 'giver' ? 1 : 0,
@@ -162,36 +132,49 @@ export const HomeScreen = () => {
       <StatusBar style="dark" />
       <View style={styles.container}>
         {role === 'doer' ? (
-          <View style={styles.header}>
-            <View style={styles.headerCopy}>
-              <Text variant="lg" weight="bold" style={styles.headerTitle}>
-                {headerCopy.title}
-              </Text>
-              <Spacer size="xs" />
-              <Text variant="sm" style={styles.headerSubtitle}>
-                {headerCopy.subtitle}
-              </Text>
+          <>
+            <View style={styles.header}>
+              <View style={styles.headerCopy}>
+                <Text variant="lg" weight="bold" style={styles.headerTitle}>
+                  {headerCopy.title}
+                </Text>
+                <Spacer size="xs" />
+                <Text variant="sm" style={styles.headerSubtitle}>
+                  {headerCopy.subtitle}
+                </Text>
+              </View>
+              <Pressable
+                {...a11yButtonProps(headerCopy.actionLabel)}
+                onPress={handleOpenAction}
+                hitSlop={HITSLOP_44}
+                style={({ pressed }) => [
+                  styles.headerAction,
+                  pressed ? styles.headerActionPressed : null,
+                ]}
+              >
+                <View style={styles.actionDot} />
+              </Pressable>
             </View>
             <Pressable
-              {...a11yButtonProps(headerCopy.actionLabel)}
-              onPress={handleOpenAction}
+              {...a11yButtonProps('Passa a Giver')}
+              onPress={handleSwitchRole}
               hitSlop={HITSLOP_44}
-              style={({ pressed }) => [
-                styles.headerAction,
-                pressed ? styles.headerActionPressed : null,
-              ]}
+              style={({ pressed }) => [styles.switchRoleLink, pressed ? styles.switchRoleLinkPressed : null]}
             >
-              <View style={styles.actionDot} />
+              {({ pressed }) => (
+                <Text
+                  variant="xs"
+                  weight="medium"
+                  style={[styles.switchRoleLinkText, pressed ? styles.switchRoleLinkTextPressed : null]}
+                >
+                  Passa a Giver
+                </Text>
+              )}
             </Pressable>
-          </View>
+          </>
         ) : (
-          <View style={styles.giverHeaderPlaceholder} />
+          <HomeHeader header={giverState.header} onPressProfile={() => navigation.navigate('Profile')} onPressSwitchRole={handleSwitchRole} />
         )}
-
-        <View style={styles.toggle}>
-          <RoleToggleOption label="Doer" value="doer" isActive={role === 'doer'} onPress={setRole} />
-          <RoleToggleOption label="Giver" value="giver" isActive={role === 'giver'} onPress={setRole} />
-        </View>
 
         <Spacer size="md" />
 
@@ -211,7 +194,6 @@ export const HomeScreen = () => {
               onOpenMission={handleOpenMission}
               onOpenChat={handleOpenChat}
               onViewAllActive={handleViewAllActive}
-              onOpenProfile={() => navigation.navigate('Profile')}
               onOpenExamples={handleOpenExamples}
               onLongPressRecent={handleLongPressRecent}
             />
@@ -286,41 +268,24 @@ const styles = StyleSheet.create({
     borderRadius: theme.radius.full,
     backgroundColor: theme.colors.primary,
   },
-  toggle: {
-    marginTop: theme.spacing.md,
-    flexDirection: 'row',
-    backgroundColor: theme.colors.surface,
-    padding: theme.spacing.xxs,
-    borderRadius: theme.radius.lg,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-  },
-  toggleOption: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: theme.spacing.sm,
-    borderRadius: theme.radius.md,
-  },
-  toggleOptionActive: {
-    backgroundColor: theme.colors.primary,
-  },
-  toggleOptionPressed: {
-    opacity: theme.opacity.pressed,
-  },
-  toggleText: {
-    color: theme.colors.textSecondary,
-  },
-  toggleTextActive: {
-    color: theme.colors.onPrimary,
-  },
   scrollContent: {
     paddingTop: theme.spacing.lg,
     paddingBottom: theme.spacing['4xl'],
     gap: theme.spacing.lg,
   },
-  giverHeaderPlaceholder: {
-    minHeight: theme.spacing.lg,
+  switchRoleLink: {
+    alignSelf: 'flex-end',
+    marginTop: theme.spacing.xs,
+  },
+  switchRoleLinkPressed: {
+    opacity: theme.opacity.pressed,
+  },
+  switchRoleLinkText: {
+    color: theme.colors.textSecondary,
+  },
+  switchRoleLinkTextPressed: {
+    textDecorationLine: 'underline',
+    opacity: theme.opacity.pressed,
   },
   stickyCtaContainer: {
     marginTop: theme.spacing.lg,

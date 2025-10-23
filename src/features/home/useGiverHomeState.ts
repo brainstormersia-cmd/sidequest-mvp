@@ -5,14 +5,17 @@ export type GiverHeaderModel = {
   userName: string;
   addressLabel?: string;
   avatarInitials: string;
+  role: 'giver' | 'doer';
 };
 
 export type ActiveMissionModel = {
   id: string;
+  role: 'courier' | 'quester' | 'doer';
   statusLabel: string;
   statusTone: 'success' | 'warning' | 'review' | 'muted';
   etaLabel: string;
-  etaTone: 'success' | 'review';
+  etaMinutes: number;
+  etaTone: 'success' | 'review' | 'warning';
   doerName: string;
   doerSummary: string;
   doerAvatarInitials: string;
@@ -137,12 +140,15 @@ export const useGiverHomeState = () => {
         userName: 'Sara',
         addressLabel: 'Via Emilio Scajone 12',
         avatarInitials: 'SA',
+        role: 'giver',
       },
       activeMission: {
         id: 'active-1',
+        role: 'courier',
         statusLabel: 'Sta arrivando',
         statusTone: 'success',
         etaLabel: '⏱ 17:35',
+        etaMinutes: 12,
         etaTone: 'success',
         doerName: 'Peter Parker',
         doerSummary: 'Ritirando ordine',
