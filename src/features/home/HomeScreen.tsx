@@ -287,20 +287,6 @@ const styles = StyleSheet.create({
     textDecorationLine: 'underline',
     opacity: theme.opacity.pressed,
   },
-  switchRoleLink: {
-    alignSelf: 'flex-end',
-    marginTop: theme.spacing.xs,
-  },
-  switchRoleLinkPressed: {
-    opacity: theme.opacity.pressed,
-  },
-  switchRoleLinkText: {
-    color: theme.colors.textSecondary,
-  },
-  switchRoleLinkTextPressed: {
-    textDecorationLine: 'underline',
-    opacity: theme.opacity.pressed,
-  },
   stickyCtaContainer: {
     marginTop: theme.spacing.lg,
     backgroundColor: theme.colors.surface,
