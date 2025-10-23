@@ -20,13 +20,13 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 const statusToneToColor = (tone: ActiveMissionCardProps['statusTone'] = 'success') => {
   switch (tone) {
     case 'warning':
-      return 'rgba(250, 204, 21, 0.82)';
+      return 'rgba(250, 204, 21, 0.8)';
     case 'review':
-      return 'rgba(147, 51, 234, 0.82)';
+      return 'rgba(147, 51, 234, 0.8)';
     case 'muted':
-      return 'rgba(255,255,255,0.64)';
+      return 'rgba(255,255,255,0.6)';
     default:
-      return 'rgba(34, 197, 94, 0.82)';
+      return 'rgba(34, 197, 94, 0.8)';
   }
 };
 
@@ -72,6 +72,7 @@ export const ActiveMissionCard: React.FC<ActiveMissionCardProps> = React.memo(
   }) => {
     const reduceMotion = useReduceMotion();
     const scaleDriver = useRef(new Animated.Value(1)).current;
+    const contentDriver = useRef(new Animated.Value(1)).current;
     const progressDriver = useRef(new Animated.Value(0)).current;
     const [trackWidth, setTrackWidth] = useState(0);
     const longPressTriggered = useRef(false);
@@ -106,16 +107,30 @@ export const ActiveMissionCard: React.FC<ActiveMissionCardProps> = React.memo(
       }).start();
     }, [progress, progressDriver, reduceMotion, trackWidth]);
 
+    useEffect(() => {
+      if (reduceMotion) {
+        contentDriver.setValue(1);
+        return;
+      }
+      contentDriver.setValue(0);
+      Animated.timing(contentDriver, {
+        toValue: 1,
+        duration: 180,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }).start();
+    }, [contentDriver, etaLabel, etaSubLabel, progressLabel, reduceMotion, statusLabel, subtitle, title]);
+
     const animateScale = useCallback(
       (toValue: number) => {
         if (reduceMotion) {
           scaleDriver.setValue(toValue);
           return;
         }
-        Animated.spring(scaleDriver, {
+        Animated.timing(scaleDriver, {
           toValue,
-          speed: 18,
-          bounciness: 6,
+          duration: 120,
+          easing: Easing.out(Easing.cubic),
           useNativeDriver: true,
         }).start();
       },
@@ -188,37 +203,47 @@ export const ActiveMissionCard: React.FC<ActiveMissionCardProps> = React.memo(
           end={{ x: 0, y: 1 }}
           style={styles.card}
         >
-          <View style={styles.headerRow}>
-            <Text variant="sm" weight="medium" style={[styles.statusLabel, { color: statusColor }]} numberOfLines={1}>
-              {statusLabel}
-            </Text>
-            <View style={styles.headerMeta}>
-              <Text
-                variant="sm"
-                weight="medium"
-                style={[styles.timerLabel, { color: timerColor }]}
-                numberOfLines={1}
-              >
-                {timerLabel}
+          <Animated.View style={[styles.cardContent, { opacity: contentDriver }]}> 
+            <View style={styles.headerRow}>
+              <Text variant="sm" weight="medium" style={[styles.statusLabel, { color: statusColor }]} numberOfLines={1}>
+                {statusLabel}
               </Text>
-              {onPressChat ? (
-                <Pressable
-                  {...a11yButtonProps('Apri chat missione')}
-                  hitSlop={HITSLOP_44}
-                  onPress={handlePressChat}
-                  style={({ pressed }) => [styles.chatTouch, pressed ? styles.chatTouchPressed : null]}
+              <View style={styles.headerMeta}>
+                <Text
+                  variant="sm"
+                  weight="medium"
+                  style={[styles.timerLabel, { color: timerColor }]}
+                  numberOfLines={1}
                 >
-                  <ChatGlyph />
-                </Pressable>
-              ) : null}
+                  {timerLabel}
+                </Text>
+                {onPressChat ? (
+                  <Pressable
+                    {...a11yButtonProps('Apri chat missione')}
+                    hitSlop={HITSLOP_44}
+                    onPress={handlePressChat}
+                    style={({ pressed }) => [styles.chatTouch, pressed ? styles.chatTouchPressed : null]}
+                  >
+                    <ChatGlyph />
+                  </Pressable>
+                ) : null}
+              </View>
             </View>
-          </View>
 
-          <View style={styles.identityRow}>
-            {avatarInitials ? (
-              <View style={styles.avatar}>
-                <Text variant="sm" weight="bold" style={styles.avatarText}>
-                  {avatarInitials}
+            <View style={styles.identityRow}>
+              {avatarInitials ? (
+                <View style={styles.avatar}>
+                  <Text variant="sm" weight="bold" style={styles.avatarText}>
+                    {avatarInitials}
+                  </Text>
+                </View>
+              ) : null}
+              <View style={styles.identityText}>
+                <Text variant="lg" weight="bold" style={styles.doerName} numberOfLines={1}>
+                  {title}
+                </Text>
+                <Text variant="sm" style={styles.doerSummary} numberOfLines={2}>
+                  {subtitle}
                 </Text>
               </View>
             ) : null}
@@ -232,16 +257,17 @@ export const ActiveMissionCard: React.FC<ActiveMissionCardProps> = React.memo(
             </View>
           </View>
 
-          <View style={styles.progressBlock}>
-            <View style={styles.progressTrack} onLayout={handleTrackLayout}>
-              <Animated.View style={[styles.progressFill, progressStyle]} />
+            <View style={styles.progressBlock}>
+              <View style={styles.progressTrack} onLayout={handleTrackLayout}>
+                <Animated.View style={[styles.progressFill, progressStyle]} />
+              </View>
+              {progressLabel ? (
+                <Text variant="xs" weight="medium" style={styles.progressLabel} numberOfLines={1}>
+                  {progressLabel}
+                </Text>
+              ) : null}
             </View>
-            {progressLabel ? (
-              <Text variant="xs" weight="medium" style={styles.progressLabel} numberOfLines={1}>
-                {progressLabel}
-              </Text>
-            ) : null}
-          </View>
+          </Animated.View>
         </LinearGradient>
       </AnimatedPressable>
     );
@@ -260,7 +286,9 @@ const styles = StyleSheet.create({
     borderRadius: theme.radius.lg,
     paddingVertical: theme.space['2xl'],
     paddingHorizontal: theme.space['2xl'],
-    gap: theme.space.lg,
+  },
+  cardContent: {
+    gap: theme.space.xl,
   },
   headerRow: {
     flexDirection: 'row',
@@ -273,7 +301,7 @@ const styles = StyleSheet.create({
   headerMeta: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.space.md,
+    gap: theme.space.sm,
   },
   timerLabel: {
     color: 'rgba(255,255,255,0.85)',
@@ -286,24 +314,24 @@ const styles = StyleSheet.create({
     opacity: theme.opacity.pressed,
   },
   chatGlyph: {
-    width: 20,
-    height: 20,
+    width: 18,
+    height: 18,
     justifyContent: 'center',
     alignItems: 'center',
   },
   chatBubble: {
-    width: '70%',
-    height: '55%',
+    width: '68%',
+    height: '54%',
     borderRadius: theme.radius.md,
-    borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.86)',
+    borderWidth: 1.25,
+    borderColor: 'rgba(255,255,255,0.82)',
   },
   chatTail: {
-    width: '30%',
+    width: '28%',
     height: 6,
-    borderBottomWidth: 1.5,
-    borderRightWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.86)',
+    borderBottomWidth: 1.25,
+    borderRightWidth: 1.25,
+    borderColor: 'rgba(255,255,255,0.82)',
     borderBottomRightRadius: theme.radius.sm,
     transform: [{ translateY: -2 }, { translateX: -3 }, { rotate: '45deg' }],
   },
@@ -357,7 +385,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.primary,
   },
   progressLabel: {
-    color: 'rgba(255,255,255,0.72)',
+    color: 'rgba(255,255,255,0.68)',
     textAlign: 'right',
     minWidth: 84,
   },

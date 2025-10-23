@@ -220,114 +220,125 @@ export const MissionSummaryScreen = () => {
             },
           ]}
         >
-          <Text variant="sm" weight="medium" style={[styles.statusLabel, { color: statusColor }]} numberOfLines={1}>
-            {mission.statusLabel}
-          </Text>
-          <View style={styles.topBarMeta}>
-            <Text variant="sm" weight="medium" style={[styles.etaLabel, { color: etaColor }]} numberOfLines={1}>
-              {etaFullLabel}
+          <View style={styles.topBarBackdrop} pointerEvents="none" />
+          <View style={styles.topBarContent}>
+            <Text variant="sm" weight="medium" style={[styles.statusLabel, { color: statusColor }]} numberOfLines={1}>
+              {mission.statusLabel}
             </Text>
-            <Pressable
-              accessibilityLabel="Chiudi riepilogo missione"
-              accessibilityRole="button"
-              onPress={handleClose}
-              hitSlop={theme.touch.hitSlop}
-              style={({ pressed }) => [styles.closeButton, pressed ? styles.closeButtonPressed : null]}
-            >
-              <Text variant="md" weight="bold" style={styles.closeLabel}>
-                ✕
+            <View style={styles.topBarMeta}>
+              <Text variant="sm" weight="medium" style={[styles.etaLabel, { color: etaColor }]} numberOfLines={1}>
+                {etaFullLabel}
               </Text>
-            </Pressable>
+              <Pressable
+                accessibilityLabel="Chiudi riepilogo missione"
+                accessibilityRole="button"
+                onPress={handleClose}
+                hitSlop={theme.touch.hitSlop}
+                style={({ pressed }) => [styles.closeButton, pressed ? styles.closeButtonPressed : null]}
+              >
+                <Text variant="md" weight="bold" style={styles.closeLabel}>
+                  ✕
+                </Text>
+              </Pressable>
+            </View>
           </View>
+          <View style={styles.topBarDivider} />
         </AnimatedView>
 
         <AnimatedScrollView
-          contentContainerStyle={{
-            paddingTop: insets.top + theme.space['5xl'],
-            paddingBottom: insets.bottom + theme.space['6xl'],
-            paddingHorizontal: theme.space['2xl'],
-            gap: theme.space['2xl'],
-          }}
+          contentContainerStyle={[
+            styles.scrollContent,
+            {
+              paddingTop: insets.top + theme.space['5xl'],
+              paddingBottom: insets.bottom + theme.space['6xl'],
+              paddingHorizontal: theme.space['2xl'],
+            },
+          ]}
           showsVerticalScrollIndicator={false}
         >
-          <AnimatedView style={[styles.glassCard, buildSectionStyle(cardDriver)]}>
-            <View style={styles.profileRow}>
-              <View style={styles.profileAvatar}>
-                <Text variant="lg" weight="bold" style={styles.profileAvatarLabel}>
-                  {mission.doerAvatarInitials}
-                </Text>
-              </View>
-              <View style={styles.profileMeta}>
-                <Text variant="lg" weight="bold" style={styles.profileName} numberOfLines={1}>
-                  {mission.doerName}
-                </Text>
-                <Text variant="sm" style={styles.profileStats} numberOfLines={1}>
-                  ⭐ {mission.doerRating.toFixed(1)}  •  {mission.doerCompletedMissions} missioni completate
-                </Text>
-              </View>
-            </View>
-
-            <View style={styles.detailStack}>
-              <Text variant="md" weight="bold" style={styles.missionTitle} numberOfLines={2}>
-                {mission.missionTitle} • {mission.missionReward}
-              </Text>
-              <Text variant="sm" style={styles.missionRoute} numberOfLines={1}>
-                Itinerario: {mission.missionRoute}
-              </Text>
-              {mission.missionNotes ? (
-                <Text variant="xs" style={styles.missionNotes} numberOfLines={2}>
-                  Note: {mission.missionNotes}
-                </Text>
-              ) : null}
-            </View>
-
-            <View style={styles.progressRow}>
-              <View
-                style={styles.progressTrack}
-                onLayout={(event) => setTrackWidth(event.nativeEvent.layout.width)}
-              >
-                <Animated.View style={[styles.progressFill, progressStyle]} />
-              </View>
-              <Text variant="xs" weight="medium" style={styles.progressLabel} numberOfLines={1}>
-                {mission.progressLabel}
-              </Text>
-            </View>
-
-            <View style={styles.timeline}>
-              {mission.roadmap.map((step, index) => {
-                const isLast = index === mission.roadmap.length - 1;
-                const nodeStyle =
-                  step.status === 'completed'
-                    ? styles.timelineNodeCompleted
-                    : step.status === 'current'
-                    ? styles.timelineNodeCurrent
-                    : styles.timelineNodeUpcoming;
-                const labelStyle =
-                  step.status === 'completed'
-                    ? styles.timelineLabelCompleted
-                    : step.status === 'current'
-                    ? styles.timelineLabelCurrent
-                    : styles.timelineLabelUpcoming;
-
-                return (
-                  <View key={step.id} style={styles.timelineRow}>
-                    <View style={styles.timelineAxis}>
-                      <View style={[styles.timelineNode, nodeStyle]} />
-                      {!isLast ? (
-                        <View
-                          style={[
-                            styles.timelineConnector,
-                            step.status === 'completed' ? styles.timelineConnectorActive : null,
-                          ]}
-                        />
-                      ) : null}
-                    </View>
-                    <Text variant="sm" style={[styles.timelineLabel, labelStyle]} numberOfLines={1}>
-                      {step.label}
+          <AnimatedView style={[styles.glassCardWrapper, buildSectionStyle(cardDriver)]}>
+            <View style={styles.glassCardSurface}>
+              <View style={styles.glassCardBackdrop} pointerEvents="none" />
+              <View style={styles.glassCardContent}>
+                <View style={styles.profileRow}>
+                  <View style={styles.profileAvatar}>
+                    <Text variant="lg" weight="bold" style={styles.profileAvatarLabel}>
+                      {mission.doerAvatarInitials}
                     </Text>
                   </View>
-                );
-              })}
+                  <View style={styles.profileMeta}>
+                    <Text variant="lg" weight="bold" style={styles.profileName} numberOfLines={1}>
+                      {mission.doerName}
+                    </Text>
+                    <Text variant="sm" style={styles.profileStats} numberOfLines={1}>
+                      ⭐ {mission.doerRating.toFixed(1)}  •  {mission.doerCompletedMissions} missioni completate
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={styles.detailStack}>
+                  <Text variant="md" weight="bold" style={styles.missionTitle} numberOfLines={1}>
+                    {mission.missionTitle} • {mission.missionReward}
+                  </Text>
+                  <Text variant="sm" style={styles.missionRoute} numberOfLines={1}>
+                    Itinerario: {mission.missionRoute}
+                  </Text>
+                  {mission.missionNotes ? (
+                    <Text variant="xs" style={styles.missionNotes} numberOfLines={2}>
+                      Note: {mission.missionNotes}
+                    </Text>
+                  ) : null}
+                </View>
+
+                <View style={styles.progressRow}>
+                  <View
+                    style={styles.progressTrack}
+                    onLayout={(event) => setTrackWidth(event.nativeEvent.layout.width)}
+                  >
+                    <Animated.View style={[styles.progressFill, progressStyle]} />
+                  </View>
+                  <Text variant="xs" weight="medium" style={styles.progressLabel} numberOfLines={1}>
+                    {mission.progressLabel}
+                  </Text>
+                </View>
+
+                <View style={styles.timeline}>
+                  {mission.roadmap.map((step, index) => {
+                    const isLast = index === mission.roadmap.length - 1;
+                    const nodeStyle =
+                      step.status === 'completed'
+                        ? styles.timelineNodeCompleted
+                        : step.status === 'current'
+                        ? styles.timelineNodeCurrent
+                        : styles.timelineNodeUpcoming;
+                    const labelStyle =
+                      step.status === 'completed'
+                        ? styles.timelineLabelCompleted
+                        : step.status === 'current'
+                        ? styles.timelineLabelCurrent
+                        : styles.timelineLabelUpcoming;
+
+                    return (
+                      <View key={step.id} style={styles.timelineRow}>
+                        <View style={styles.timelineAxis}>
+                          <View style={[styles.timelineNode, nodeStyle]} />
+                          {!isLast ? (
+                            <View
+                              style={[
+                                styles.timelineConnector,
+                                step.status === 'completed' ? styles.timelineConnectorActive : null,
+                              ]}
+                            />
+                          ) : null}
+                        </View>
+                        <Text variant="sm" style={[styles.timelineLabel, labelStyle]} numberOfLines={1}>
+                          {step.label}
+                        </Text>
+                      </View>
+                    );
+                  })}
+                </View>
+              </View>
             </View>
           </AnimatedView>
         </AnimatedScrollView>
@@ -342,8 +353,11 @@ export const MissionSummaryScreen = () => {
             },
           ]}
         >
-          <ActionButton label="Apri chat" tone="primary" onPress={handleMessage} />
-          <ActionButton label="Annulla" tone="danger" onPress={handleCancelMission} />
+          <View style={styles.actionBarBackdrop} pointerEvents="none" />
+          <View style={styles.actionBarContent}>
+            <ActionButton label="Apri chat" tone="primary" onPress={handleMessage} />
+            <ActionButton label="Annulla" tone="danger" onPress={handleCancelMission} />
+          </View>
         </AnimatedView>
       </View>
     </LinearGradient>
@@ -353,13 +367,13 @@ export const MissionSummaryScreen = () => {
 const statusToneToColor = (tone: ActiveMissionModel['statusTone']) => {
   switch (tone) {
     case 'warning':
-      return 'rgba(250,204,21,0.82)';
+      return 'rgba(250,204,21,0.8)';
     case 'review':
-      return 'rgba(147,51,234,0.82)';
+      return 'rgba(147,51,234,0.8)';
     case 'muted':
       return 'rgba(255,255,255,0.6)';
     default:
-      return 'rgba(34,197,94,0.82)';
+      return 'rgba(34,197,94,0.8)';
   }
 };
 
@@ -386,13 +400,19 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
+    overflow: 'hidden',
+    borderBottomLeftRadius: theme.radius.lg,
+    borderBottomRightRadius: theme.radius.lg,
+    zIndex: 2,
+  },
+  topBarBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(14,17,23,0.68)',
+  },
+  topBarContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: 'rgba(14,17,23,0.74)',
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: 'rgba(255,255,255,0.08)',
-    zIndex: 2,
   },
   statusLabel: {
     letterSpacing: 0.1,
@@ -415,17 +435,35 @@ const styles = StyleSheet.create({
   closeLabel: {
     color: 'rgba(255,255,255,0.9)',
   },
-  glassCard: {
+  topBarDivider: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: 'rgba(255,255,255,0.14)',
+    marginTop: theme.space.md,
+  },
+  scrollContent: {
+    gap: theme.space['3xl'],
+  },
+  glassCardWrapper: {
     borderRadius: theme.radius.xl,
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    padding: theme.space['2xl'],
-    gap: theme.space.lg,
+    overflow: 'hidden',
     ...theme.shadow.soft,
+  },
+  glassCardSurface: {
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    overflow: 'hidden',
+  },
+  glassCardBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+  },
+  glassCardContent: {
+    padding: theme.space['2xl'],
+    gap: theme.space.xl,
   },
   profileRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.space.lg,
+    gap: theme.space.md,
   },
   profileAvatar: {
     width: theme.space['4xl'],
@@ -451,7 +489,7 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.72)',
   },
   detailStack: {
-    gap: theme.space.sm,
+    gap: theme.space.xs,
   },
   missionTitle: {
     color: 'rgba(255,255,255,0.92)',
@@ -488,7 +526,7 @@ const styles = StyleSheet.create({
   timelineRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: theme.space.lg,
+    gap: theme.space.md,
   },
   timelineAxis: {
     alignItems: 'center',
@@ -505,7 +543,7 @@ const styles = StyleSheet.create({
   },
   timelineNodeCurrent: {
     borderColor: theme.colors.primary,
-    backgroundColor: 'rgba(23,27,35,0.96)',
+    backgroundColor: 'transparent',
   },
   timelineNodeUpcoming: {
     borderColor: 'rgba(255,255,255,0.32)',
@@ -538,13 +576,19 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
+    paddingTop: theme.space.md,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(255,255,255,0.12)',
+    overflow: 'hidden',
+  },
+  actionBarBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(14,17,23,0.74)',
+  },
+  actionBarContent: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: theme.space.md,
-    paddingTop: theme.space.md,
-    backgroundColor: 'rgba(14,17,23,0.78)',
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: 'rgba(255,255,255,0.08)',
   },
   actionButton: {
     flex: 1,
