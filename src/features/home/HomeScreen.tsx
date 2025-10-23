@@ -21,6 +21,7 @@ import { CreateMissionSheet } from '../create/CreateMissionSheet';
 import { useRole } from '../../shared/state/roleStore';
 import { HomeDoerSection } from './HomeDoerSection';
 import { HomeGiverSection } from './HomeGiverSection';
+import { HomeHeader } from './components';
 import { a11yButtonProps, HITSLOP_44 } from '../../shared/lib/a11y';
 import { useGiverHomeState } from './useGiverHomeState';
 import * as Haptics from 'expo-haptics';
@@ -172,7 +173,7 @@ export const HomeScreen = () => {
             </Pressable>
           </>
         ) : (
-          <View style={styles.giverHeaderPlaceholder} />
+          <HomeHeader header={giverState.header} onPressProfile={() => navigation.navigate('Profile')} onPressSwitchRole={handleSwitchRole} />
         )}
 
         <Spacer size="md" />
@@ -193,8 +194,6 @@ export const HomeScreen = () => {
               onOpenMission={handleOpenMission}
               onOpenChat={handleOpenChat}
               onViewAllActive={handleViewAllActive}
-              onOpenProfile={() => navigation.navigate('Profile')}
-              onSwitchRole={handleSwitchRole}
               onOpenExamples={handleOpenExamples}
               onLongPressRecent={handleLongPressRecent}
             />
@@ -274,8 +273,19 @@ const styles = StyleSheet.create({
     paddingBottom: theme.spacing['4xl'],
     gap: theme.spacing.lg,
   },
-  giverHeaderPlaceholder: {
-    minHeight: theme.spacing.lg,
+  switchRoleLink: {
+    alignSelf: 'flex-end',
+    marginTop: theme.spacing.xs,
+  },
+  switchRoleLinkPressed: {
+    opacity: theme.opacity.pressed,
+  },
+  switchRoleLinkText: {
+    color: theme.colors.textSecondary,
+  },
+  switchRoleLinkTextPressed: {
+    textDecorationLine: 'underline',
+    opacity: theme.opacity.pressed,
   },
   switchRoleLink: {
     alignSelf: 'flex-end',

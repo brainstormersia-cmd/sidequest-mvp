@@ -2,7 +2,7 @@ export type ActiveMissionRole = 'courier' | 'quester' | 'doer';
 
 export interface ActiveMissionCardProps {
   role: ActiveMissionRole;
-  etaMinutes: number;
+  etaLabel: string;
   etaTone?: 'success' | 'warning' | 'review';
   statusLabel: string;
   statusTone?: 'success' | 'warning' | 'review' | 'muted';

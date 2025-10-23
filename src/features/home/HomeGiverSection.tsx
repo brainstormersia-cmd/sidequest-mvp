@@ -3,7 +3,6 @@ import { StyleSheet, View } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import {
   ActiveMissionSection,
-  HomeHeader,
   NewMissionSection,
   RecentMissionsSection,
   ReturningSection,
@@ -17,8 +16,6 @@ export type HomeGiverSectionProps = {
   onOpenMission: (missionId: string) => void;
   onOpenChat: (missionId: string) => void;
   onViewAllActive: () => void;
-  onOpenProfile: () => void;
-  onSwitchRole: () => void;
   onOpenExamples: () => void;
   onLongPressRecent: (missionId: string) => void;
 };
@@ -29,8 +26,6 @@ export const HomeGiverSection: React.FC<HomeGiverSectionProps> = ({
   onOpenMission,
   onOpenChat,
   onViewAllActive,
-  onOpenProfile,
-  onSwitchRole,
   onOpenExamples,
   onLongPressRecent,
 }) => {
@@ -81,8 +76,6 @@ export const HomeGiverSection: React.FC<HomeGiverSectionProps> = ({
 
   return (
     <View style={styles.container}>
-      <HomeHeader header={state.header} onPressProfile={onOpenProfile} onPressSwitchRole={onSwitchRole} />
-
       {activeMission ? (
         <ActiveMissionSection
           mission={activeMission}

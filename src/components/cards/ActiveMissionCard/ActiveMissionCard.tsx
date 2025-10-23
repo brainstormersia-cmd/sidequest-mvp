@@ -1,29 +1,10 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useMemo } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
-import {
-  Animated,
-  Easing,
-  Pressable,
-  StyleSheet,
-  View,
-} from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { Text } from '../../../shared/ui/Text';
 import { theme } from '../../../shared/lib/theme';
 import { a11yButtonProps, HITSLOP_44 } from '../../../shared/lib/a11y';
-import { useActiveMissionAnim } from './ActiveMissionCard.anim';
 import { ActiveMissionCardProps } from './ActiveMissionCard.types';
-
-const AnimatedView = Animated.createAnimatedComponent(View);
-const AnimatedText = Animated.createAnimatedComponent(Text);
-
-const withOpacity = (hexColor: string, alpha: number) => {
-  const sanitized = hexColor.replace('#', '');
-  const bigint = parseInt(sanitized, 16);
-  const r = (bigint >> 16) & 255;
-  const g = (bigint >> 8) & 255;
-  const b = bigint & 255;
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-};
 
 const roleLabels: Record<ActiveMissionCardProps['role'], string> = {
   courier: 'Corriere in arrivo',
@@ -40,7 +21,7 @@ const statusToneToColor = (tone: ActiveMissionCardProps['statusTone']) => {
     case 'review':
       return theme.colors.accent;
     default:
-      return theme.colors.textSecondary;
+      return theme.colors.textSubtle;
   }
 };
 
@@ -53,23 +34,21 @@ const etaToneToColor = (tone: ActiveMissionCardProps['etaTone']) => {
     case 'review':
       return theme.colors.accent;
     default:
-      return theme.colors.textSecondary;
+      return theme.colors.textSubtle;
   }
 };
 
-const formatEtaLabel = (targetTime: number) => {
-  const diffMs = Math.max(0, targetTime - Date.now());
-  const diffMinutes = Math.ceil(diffMs / 60000);
-  if (diffMinutes <= 1) {
-    return '≈ 1 min';
+const clampProgress = (value: number) => {
+  if (Number.isNaN(value)) {
+    return 0;
   }
-  return `≈ ${diffMinutes} min`;
+  return Math.max(0, Math.min(1, value));
 };
 
 export const ActiveMissionCard: React.FC<ActiveMissionCardProps> = React.memo(
   ({
     role,
-    etaMinutes,
+    etaLabel,
     etaTone = 'success',
     statusLabel,
     statusTone = 'success',
@@ -79,124 +58,53 @@ export const ActiveMissionCard: React.FC<ActiveMissionCardProps> = React.memo(
     progressLabel,
     onPress,
     onPressChat,
-    playState = 'playing',
     visible = true,
     avatarInitials,
   }) => {
-    const { badgeStyle, sheenStyle, progressOverlayStyle, shouldReduceMotion } = useActiveMissionAnim({
-      playState,
-      visible,
-    });
-
     const gradientColors = useMemo<Readonly<[string, string]>>(
-      () => ['#0B0C0E', '#2C2C2E'] as const,
+      () => ['#111827', '#3F3F46'] as const,
       [],
     );
 
-    const etaTargetTime = useMemo(() => Date.now() + etaMinutes * 60 * 1000, [etaMinutes]);
-    const [etaLabel, setEtaLabel] = useState(() => formatEtaLabel(etaTargetTime));
-
-    useEffect(() => {
-      setEtaLabel(formatEtaLabel(etaTargetTime));
-    }, [etaTargetTime]);
-
-    useEffect(() => {
-      const intervalId = setInterval(() => {
-        setEtaLabel(formatEtaLabel(etaTargetTime));
-      }, 30000);
-
-      return () => clearInterval(intervalId);
-    }, [etaTargetTime]);
-
-    const statusAnimation = useRef(new Animated.Value(1)).current;
-    const [displayStatus, setDisplayStatus] = useState(statusLabel);
-
-    useEffect(() => {
-      if (statusLabel === displayStatus) {
-        return;
-      }
-      Animated.timing(statusAnimation, {
-        toValue: 0,
-        duration: 200,
-        easing: Easing.inOut(Easing.quad),
-        useNativeDriver: true,
-      }).start(() => {
-        setDisplayStatus(statusLabel);
-        statusAnimation.setValue(0);
-        Animated.timing(statusAnimation, {
-          toValue: 1,
-          duration: 200,
-          easing: Easing.inOut(Easing.quad),
-          useNativeDriver: true,
-        }).start();
-      });
-    }, [displayStatus, statusAnimation, statusLabel]);
-
-    const clampedProgress = useMemo(() => Math.max(0, Math.min(1, progress)), [progress]);
-
     const statusColor = useMemo(() => statusToneToColor(statusTone), [statusTone]);
     const etaColor = useMemo(() => etaToneToColor(etaTone), [etaTone]);
+    const progressWidth = useMemo(
+      () => `${Math.round(clampProgress(progress) * 100)}%` as `${number}%`,
+      [progress],
+    );
 
     return (
-      <AnimatedView style={[styles.wrapper, !visible && styles.hidden]}>
+      <View style={[styles.wrapper, !visible && styles.hidden]}>
         <Pressable
           {...(onPress ? a11yButtonProps(roleLabels[role]) : {})}
           onPress={onPress}
+          hitSlop={HITSLOP_44}
           style={({ pressed }) => [styles.pressable, pressed ? styles.pressablePressed : null]}
         >
-          <LinearGradient colors={gradientColors} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} style={styles.card}>
-            {!shouldReduceMotion ? <Animated.View pointerEvents="none" style={[styles.sheen, sheenStyle]} /> : null}
-            <Pressable
-              {...(onPressChat ? a11yButtonProps('Apri chat missione') : {})}
-              onPress={onPressChat}
-              hitSlop={{ top: theme.space.xs, bottom: theme.space.xs, left: theme.space.xs, right: theme.space.xs }}
-              style={({ pressed }) => [styles.chatButton, pressed ? styles.chatButtonPressed : null]}
-            >
-              <Text variant="sm" weight="bold" style={styles.chatIcon}>
-                💬
-              </Text>
-            </Pressable>
-
+          <LinearGradient colors={gradientColors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.card}>
             <View style={styles.topRow}>
-              <Animated.View style={[styles.statusBadge, badgeStyle]} />
-              <AnimatedText
-                variant="xs"
-                weight="medium"
-                style={[
-                  styles.statusLabel,
-                  {
-                    color: statusColor,
-                    opacity: statusAnimation,
-                    transform: [
-                      {
-                        translateY: statusAnimation.interpolate({
-                          inputRange: [0, 1],
-                          outputRange: [theme.space.xxs, 0],
-                        }),
-                      },
-                    ],
-                  },
-                ]}
-              >
-                {displayStatus}
-              </AnimatedText>
+              <Text variant="xs" weight="bold" style={[styles.statusLabel, { color: statusColor }]}>
+                {statusLabel}
+              </Text>
+              {onPressChat ? (
+                <Pressable
+                  {...a11yButtonProps('Apri chat missione')}
+                  onPress={onPressChat}
+                  hitSlop={HITSLOP_44}
+                  style={({ pressed }) => [styles.chatButton, pressed ? styles.chatButtonPressed : null]}
+                >
+                  <Text variant="sm" weight="bold" style={styles.chatIcon}>
+                    💬
+                  </Text>
+                </Pressable>
+              ) : null}
             </View>
 
             <View style={styles.middleRow}>
-              <View style={styles.infoColumn}>
-                <Text variant="sm" weight="medium" style={styles.subtitle}>
-                  {subtitle}
-                </Text>
-                <View style={styles.timeRow}>
-                  <Text variant="xs" style={styles.timeIcon}>
-                    ⏱
-                  </Text>
-                  <Text variant="xs" weight="medium" style={[styles.timeLabel, { color: etaColor }]}>
-                    {etaLabel}
-                  </Text>
-                </View>
-              </View>
-              <View style={styles.avatarColumn}>
+              <Text variant="md" weight="bold" style={[styles.etaLabel, { color: etaColor }]}>
+                {etaLabel}
+              </Text>
+              <View style={styles.doerInfo}>
                 {avatarInitials ? (
                   <View style={styles.avatar}>
                     <Text variant="sm" weight="bold" style={styles.avatarText}>
@@ -204,20 +112,20 @@ export const ActiveMissionCard: React.FC<ActiveMissionCardProps> = React.memo(
                     </Text>
                   </View>
                 ) : null}
-                <Text variant="sm" weight="medium" style={styles.title}>
-                  {title}
-                </Text>
+                <View style={styles.doerText}>
+                  <Text variant="sm" weight="bold" style={styles.doerName}>
+                    {title}
+                  </Text>
+                  <Text variant="xs" style={styles.doerSummary}>
+                    {subtitle}
+                  </Text>
+                </View>
               </View>
             </View>
 
             <View style={styles.bottomRow}>
               <View style={styles.progressTrack}>
-                <View style={[styles.progressFill, { flex: clampedProgress || Number.EPSILON }]}>
-                  {!shouldReduceMotion ? (
-                    <Animated.View style={[styles.progressOverlay, progressOverlayStyle]} />
-                  ) : null}
-                </View>
-                <View style={{ flex: 1 - clampedProgress }} />
+                <View style={[styles.progressFill, { width: progressWidth }]} />
               </View>
               {progressLabel ? (
                 <Text variant="xs" style={styles.progressLabel}>
@@ -227,7 +135,7 @@ export const ActiveMissionCard: React.FC<ActiveMissionCardProps> = React.memo(
             </View>
           </LinearGradient>
         </Pressable>
-      </AnimatedView>
+      </View>
     );
   },
 );
@@ -243,140 +151,103 @@ const styles = StyleSheet.create({
   },
   pressable: {
     borderRadius: theme.radius.lg,
-    overflow: 'hidden',
-    shadowColor: '#000000',
-    shadowOpacity: 0.28,
+    shadowColor: '#0B0C0E',
+    shadowOpacity: 0.24,
     shadowOffset: { width: 0, height: 12 },
     shadowRadius: 24,
     elevation: theme.elevation.level2,
+    overflow: 'hidden',
   },
   pressablePressed: {
     opacity: theme.opacity.pressed,
   },
   card: {
-    paddingVertical: theme.spacing.md,
-    paddingLeft: theme.spacing.md,
-    paddingRight: theme.spacing.md + theme.spacing['3xl'],
+    padding: theme.space.lg,
     borderRadius: theme.radius.lg,
-    overflow: 'hidden',
-    gap: theme.spacing.md,
+    gap: theme.space.md,
     borderWidth: 1,
     borderColor: '#2C2C2E',
-    position: 'relative',
-  },
-  sheen: {
-    position: 'absolute',
-    top: -theme.spacing['2xl'],
-    left: -theme.spacing['4xl'],
-    width: theme.spacing['5xl'],
-    height: theme.spacing['5xl'] * 2.2,
-    backgroundColor: theme.colors.onPrimary,
-    transform: [{ rotate: '18deg' }],
-  },
-  chatButton: {
-    position: 'absolute',
-    top: theme.spacing.sm,
-    right: theme.spacing.sm,
-    borderRadius: theme.radius.full,
-    backgroundColor: withOpacity(theme.colors.onPrimary, 0.18),
-    height: theme.spacing['4xl'] - theme.spacing.sm,
-    width: theme.spacing['4xl'] - theme.spacing.sm,
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 2,
-  },
-  chatButtonPressed: {
-    opacity: theme.opacity.pressed,
-  },
-  chatIcon: {
-    color: theme.colors.onPrimary,
   },
   topRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.xs,
-    paddingRight: theme.spacing.md + theme.spacing['3xl'],
-  },
-  statusBadge: {
-    width: theme.spacing.xs,
-    height: theme.spacing.xs,
-    borderRadius: theme.radius.full,
-    backgroundColor: theme.colors.success,
+    justifyContent: 'space-between',
   },
   statusLabel: {
-    flexShrink: 0,
+    color: theme.colors.success,
+    letterSpacing: 0.2,
+  },
+  chatButton: {
+    borderRadius: theme.radius.full,
+    backgroundColor: '#FFFFFF22',
+    paddingHorizontal: theme.space.xs,
+    paddingVertical: theme.space.xxs,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  chatButtonPressed: {
+    opacity: theme.opacity.pressed,
+    transform: [{ scale: 0.96 }],
+  },
+  chatIcon: {
+    color: theme.colors.onPrimary,
   },
   middleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.md,
+    justifyContent: 'space-between',
+    gap: theme.space.lg,
+    flexWrap: 'wrap',
   },
-  infoColumn: {
-    flex: 1,
-    gap: theme.spacing.xs,
+  etaLabel: {
+    color: theme.colors.success,
   },
-  timeRow: {
+  doerInfo: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.xxs,
-  },
-  timeIcon: {
-    color: withOpacity(theme.colors.onPrimary, 0.6),
-  },
-  timeLabel: {
-    letterSpacing: 0.2,
-  },
-  subtitle: {
-    color: withOpacity(theme.colors.onPrimary, 0.72),
-  },
-  avatarColumn: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: theme.spacing.xs,
-    minWidth: theme.spacing['3xl'],
+    gap: theme.space.sm,
+    flex: 1,
   },
   avatar: {
-    height: theme.spacing['3xl'],
-    width: theme.spacing['3xl'],
+    height: theme.space['2xl'],
+    width: theme.space['2xl'],
     borderRadius: theme.radius.full,
-    backgroundColor: withOpacity(theme.colors.onPrimary, 0.16),
+    backgroundColor: '#1F1F24',
     alignItems: 'center',
     justifyContent: 'center',
   },
   avatarText: {
     color: theme.colors.onPrimary,
   },
-  title: {
+  doerText: {
+    flex: 1,
+    gap: theme.space.xxs,
+    flexShrink: 1,
+  },
+  doerName: {
+    color: theme.colors.onPrimary,
+  },
+  doerSummary: {
     color: theme.colors.onPrimary,
   },
   bottomRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.sm,
+    gap: theme.space.xs,
   },
   progressTrack: {
     flex: 1,
-    flexDirection: 'row',
-    borderRadius: theme.radius.full,
-    backgroundColor: withOpacity(theme.colors.onPrimary, 0.18),
+    height: theme.space.xs / 2,
+    borderRadius: theme.radius.md,
+    backgroundColor: '#FFFFFF33',
     overflow: 'hidden',
-    height: theme.spacing.xxs,
   },
   progressFill: {
+    height: '100%',
+    borderRadius: theme.radius.md,
     backgroundColor: theme.colors.primary,
-    borderRadius: theme.radius.full,
-    justifyContent: 'center',
-    overflow: 'hidden',
-  },
-  progressOverlay: {
-    position: 'absolute',
-    top: 0,
-    bottom: 0,
-    width: theme.spacing.xl,
-    backgroundColor: theme.colors.onPrimary,
   },
   progressLabel: {
-    color: withOpacity(theme.colors.onPrimary, 0.8),
-    marginLeft: 'auto',
+    color: theme.colors.onPrimary,
   },
 });
