@@ -26,7 +26,7 @@ export type ActiveMissionModel = {
   progressLabel: string;
   missionTitle: string;
   missionReward: string;
-  missionDescription: string;
+  missionRoute: string;
   missionNotes?: string;
   roadmap: Array<{
     id: string;
@@ -172,8 +172,8 @@ export const useGiverHomeState = () => {
         progressLabel: '60% completato',
         missionTitle: 'Consegna pacco Bartolini',
         missionReward: '€25',
-        missionDescription: 'Ritiro → Destinazione • Note: lasciare al portiere.',
-        missionNotes: 'Contatta il portiere se il destinatario non risponde.',
+        missionRoute: 'Ritiro → Destinazione',
+        missionNotes: 'Lasciare al portiere se il destinatario non risponde.',
         roadmap: [
           { id: 'checkpoint-1', label: 'Ritiro completato', status: 'completed' },
           { id: 'checkpoint-2', label: 'In viaggio', status: 'current' },

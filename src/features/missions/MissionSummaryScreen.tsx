@@ -1,10 +1,19 @@
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Alert, Animated, Easing, Pressable, SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
+import {
+  Alert,
+  Animated,
+  Easing,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import * as Haptics from 'expo-haptics';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { RootStackParamList } from '../../routes/RootNavigator';
 import { ActiveMissionModel } from '../home/useGiverHomeState';
 import { Text } from '../../shared/ui/Text';
@@ -26,6 +35,30 @@ const buildSectionStyle = (driver: Animated.Value) => ({
   ],
 });
 
+const buildTopBarStyle = (driver: Animated.Value) => ({
+  opacity: driver,
+  transform: [
+    {
+      translateY: driver.interpolate({
+        inputRange: [0, 1],
+        outputRange: [-12, 0],
+      }),
+    },
+  ],
+});
+
+const buildBottomBarStyle = (driver: Animated.Value) => ({
+  opacity: driver,
+  transform: [
+    {
+      translateY: driver.interpolate({
+        inputRange: [0, 1],
+        outputRange: [24, 0],
+      }),
+    },
+  ],
+});
+
 const clampProgress = (value: number) => {
   if (Number.isNaN(value)) {
     return 0;
@@ -39,16 +72,11 @@ const ActionButton = ({
   onPress,
 }: {
   label: string;
-  tone: 'primary' | 'neutral' | 'danger';
+  tone: 'primary' | 'danger';
   onPress: () => void;
 }) => {
-  const backgroundColor =
-    tone === 'primary'
-      ? theme.colors.primary
-      : tone === 'danger'
-      ? theme.colors.error
-      : 'rgba(255,255,255,0.08)';
-  const textColor = tone === 'neutral' ? 'rgba(255,255,255,0.9)' : theme.colors.onPrimary;
+  const backgroundColor = tone === 'primary' ? theme.colors.primary : theme.colors.error;
+  const textColor = theme.colors.onPrimary;
 
   const handlePress = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => undefined);
@@ -67,9 +95,7 @@ const ActionButton = ({
         pressed ? styles.actionButtonPressed : null,
       ]}
     >
-      <Text variant="md" weight="medium" style={[styles.actionButtonLabel, { color: textColor }]}
-        numberOfLines={1}
-      >
+      <Text variant="md" weight="medium" style={[styles.actionButtonLabel, { color: textColor }]} numberOfLines={1}>
         {label}
       </Text>
       <View style={styles.actionButtonOverlay} pointerEvents="none" />
@@ -82,28 +108,43 @@ export const MissionSummaryScreen = () => {
   const route = useRoute<RouteProp<RootStackParamList, 'MissionSummary'>>();
   const mission = route.params.mission;
   const reduceMotion = useReduceMotion();
+  const insets = useSafeAreaInsets();
 
-  const headerDriver = useRef(new Animated.Value(reduceMotion ? 1 : 0)).current;
-  const profileDriver = useRef(new Animated.Value(reduceMotion ? 1 : 0)).current;
-  const roadmapDriver = useRef(new Animated.Value(reduceMotion ? 1 : 0)).current;
+  const topDriver = useRef(new Animated.Value(reduceMotion ? 1 : 0)).current;
+  const cardDriver = useRef(new Animated.Value(reduceMotion ? 1 : 0)).current;
   const actionsDriver = useRef(new Animated.Value(reduceMotion ? 1 : 0)).current;
-  const progressDriver = useRef(new Animated.Value(clampProgress(mission.progress))).current;
-  const [trackWidth, setTrackWidth] = React.useState(0);
+  const progressDriver = useRef(new Animated.Value(0)).current;
+  const [trackWidth, setTrackWidth] = useState(0);
 
   useEffect(() => {
     if (reduceMotion) {
+      topDriver.setValue(1);
+      cardDriver.setValue(1);
+      actionsDriver.setValue(1);
       return;
     }
-    Animated.stagger(80, [headerDriver, profileDriver, roadmapDriver, actionsDriver].map((driver, index) =>
-      Animated.timing(driver, {
+
+    Animated.stagger(60, [
+      Animated.timing(topDriver, {
         toValue: 1,
-        duration: 360,
-        delay: index * 40,
+        duration: 260,
         easing: Easing.out(Easing.cubic),
         useNativeDriver: true,
       }),
-    )).start();
-  }, [actionsDriver, headerDriver, profileDriver, reduceMotion, roadmapDriver]);
+      Animated.timing(cardDriver, {
+        toValue: 1,
+        duration: 360,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
+      Animated.timing(actionsDriver, {
+        toValue: 1,
+        duration: 320,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [actionsDriver, cardDriver, reduceMotion, topDriver]);
 
   useEffect(() => {
     const target = trackWidth * clampProgress(mission.progress);
@@ -116,7 +157,7 @@ export const MissionSummaryScreen = () => {
     }
     Animated.timing(progressDriver, {
       toValue: target,
-      duration: 320,
+      duration: 250,
       easing: Easing.out(Easing.cubic),
       useNativeDriver: false,
     }).start();
@@ -128,6 +169,21 @@ export const MissionSummaryScreen = () => {
     }
     return { width: progressDriver } as const;
   }, [progressDriver, trackWidth]);
+
+  const etaFullLabel = useMemo(() => {
+    if (!mission.etaSubLabel) {
+      return mission.etaLabel;
+    }
+    return `${mission.etaLabel} ${mission.etaSubLabel}`;
+  }, [mission.etaLabel, mission.etaSubLabel]);
+
+  const statusColor = statusToneToColor(mission.statusTone);
+  const etaColor = etaToneToColor(mission.etaTone);
+  const accessibilityLabel = useMemo(
+    () =>
+      `${mission.statusLabel}, arrivo previsto in ${etaFullLabel}, progresso ${mission.progressLabel}`,
+    [etaFullLabel, mission.progressLabel, mission.statusLabel],
+  );
 
   const handleClose = () => {
     Haptics.selectionAsync().catch(() => undefined);
@@ -146,65 +202,55 @@ export const MissionSummaryScreen = () => {
     Alert.alert('Messaggi', 'Apri la chat con il Doer.');
   };
 
-  const handleMore = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => undefined);
-    Alert.alert('Azioni missione', 'Opzioni rapide', [
-      { text: 'Annulla missione', style: 'destructive', onPress: handleCancelMission },
-      { text: 'Chiudi', style: 'cancel' },
-    ]);
-  };
-
-  const statusColor = statusToneToColor(mission.statusTone);
-  const etaColor = etaToneToColor(mission.etaTone);
-
   return (
-    <LinearGradient colors={['#0F1117', '#181C24']} style={styles.gradient}>
+    <LinearGradient colors={['rgba(14,17,23,0.96)', 'rgba(23,27,35,0.96)']} style={styles.gradient}>
       <StatusBar style="light" />
-      <SafeAreaView style={styles.safe}>
+      <View style={styles.safe}>
+        <AnimatedView
+          accessible
+          accessibilityRole="header"
+          accessibilityLabel={accessibilityLabel}
+          style={[
+            styles.topBar,
+            buildTopBarStyle(topDriver),
+            {
+              paddingTop: insets.top + theme.space.md,
+              paddingBottom: theme.space.md,
+              paddingHorizontal: theme.space['2xl'],
+            },
+          ]}
+        >
+          <Text variant="sm" weight="medium" style={[styles.statusLabel, { color: statusColor }]} numberOfLines={1}>
+            {mission.statusLabel}
+          </Text>
+          <View style={styles.topBarMeta}>
+            <Text variant="sm" weight="medium" style={[styles.etaLabel, { color: etaColor }]} numberOfLines={1}>
+              {etaFullLabel}
+            </Text>
+            <Pressable
+              accessibilityLabel="Chiudi riepilogo missione"
+              accessibilityRole="button"
+              onPress={handleClose}
+              hitSlop={theme.touch.hitSlop}
+              style={({ pressed }) => [styles.closeButton, pressed ? styles.closeButtonPressed : null]}
+            >
+              <Text variant="md" weight="bold" style={styles.closeLabel}>
+                ✕
+              </Text>
+            </Pressable>
+          </View>
+        </AnimatedView>
+
         <AnimatedScrollView
-          contentContainerStyle={styles.content}
+          contentContainerStyle={{
+            paddingTop: insets.top + theme.space['5xl'],
+            paddingBottom: insets.bottom + theme.space['6xl'],
+            paddingHorizontal: theme.space['2xl'],
+            gap: theme.space['2xl'],
+          }}
           showsVerticalScrollIndicator={false}
         >
-          <AnimatedView style={[styles.headerRow, buildSectionStyle(headerDriver)]}>
-            <View style={styles.statusBlock}>
-              <Text variant="xs" weight="medium" style={[styles.statusLabel, { color: statusColor }]}
-                numberOfLines={1}
-              >
-                {mission.statusLabel}
-              </Text>
-              <Text variant="md" weight="medium" style={[styles.etaLabel, { color: etaColor }]} numberOfLines={1}>
-                {mission.etaSubLabel ? `${mission.etaLabel} ${mission.etaSubLabel}` : mission.etaLabel}
-              </Text>
-            </View>
-            <View style={styles.headerActions}>
-              <Pressable
-                accessibilityLabel="Azioni missione"
-                accessibilityRole="button"
-                onPress={handleMore}
-                hitSlop={theme.touch.hitSlop}
-                style={({ pressed }) => [styles.iconButton, pressed ? styles.iconButtonPressed : null]}
-              >
-                <View style={styles.dotsIcon}>
-                  <View style={styles.dot} />
-                  <View style={styles.dot} />
-                  <View style={styles.dot} />
-                </View>
-              </Pressable>
-              <Pressable
-                accessibilityLabel="Chiudi riepilogo missione"
-                accessibilityRole="button"
-                onPress={handleClose}
-                hitSlop={theme.touch.hitSlop}
-                style={({ pressed }) => [styles.iconButton, pressed ? styles.iconButtonPressed : null]}
-              >
-                <Text variant="md" weight="bold" style={styles.closeLabel}>
-                  ×
-                </Text>
-              </Pressable>
-            </View>
-          </AnimatedView>
-
-          <AnimatedView style={[styles.profileCard, buildSectionStyle(profileDriver)]}>
+          <AnimatedView style={[styles.glassCard, buildSectionStyle(cardDriver)]}>
             <View style={styles.profileRow}>
               <View style={styles.profileAvatar}>
                 <Text variant="lg" weight="bold" style={styles.profileAvatarLabel}>
@@ -221,35 +267,32 @@ export const MissionSummaryScreen = () => {
               </View>
             </View>
 
-            <View style={styles.divider} />
-
-            <Text variant="md" weight="bold" style={styles.missionTitle} numberOfLines={2}>
-              {mission.missionTitle} • {mission.missionReward}
-            </Text>
-            <Text variant="sm" style={styles.missionDescription}>
-              {mission.missionDescription}
-            </Text>
-            {mission.missionNotes ? (
-              <Text variant="xs" style={styles.missionNotes}>
-                {mission.missionNotes}
+            <View style={styles.detailStack}>
+              <Text variant="md" weight="bold" style={styles.missionTitle} numberOfLines={2}>
+                {mission.missionTitle} • {mission.missionReward}
               </Text>
-            ) : null}
+              <Text variant="sm" style={styles.missionRoute} numberOfLines={1}>
+                Itinerario: {mission.missionRoute}
+              </Text>
+              {mission.missionNotes ? (
+                <Text variant="xs" style={styles.missionNotes} numberOfLines={2}>
+                  Note: {mission.missionNotes}
+                </Text>
+              ) : null}
+            </View>
 
-            <View style={styles.progressSection}>
-              <View style={styles.progressTrack} onLayout={(event) => setTrackWidth(event.nativeEvent.layout.width)}>
+            <View style={styles.progressRow}>
+              <View
+                style={styles.progressTrack}
+                onLayout={(event) => setTrackWidth(event.nativeEvent.layout.width)}
+              >
                 <Animated.View style={[styles.progressFill, progressStyle]} />
-                <View style={styles.progressInnerShadow} pointerEvents="none" />
               </View>
-              <Text variant="xs" style={styles.progressLabel} numberOfLines={1}>
+              <Text variant="xs" weight="medium" style={styles.progressLabel} numberOfLines={1}>
                 {mission.progressLabel}
               </Text>
             </View>
-          </AnimatedView>
 
-          <AnimatedView style={[styles.roadmapCard, buildSectionStyle(roadmapDriver)]}>
-            <Text variant="sm" weight="medium" style={styles.roadmapTitle}>
-              Roadmap
-            </Text>
             <View style={styles.timeline}>
               {mission.roadmap.map((step, index) => {
                 const isLast = index === mission.roadmap.length - 1;
@@ -265,13 +308,21 @@ export const MissionSummaryScreen = () => {
                     : step.status === 'current'
                     ? styles.timelineLabelCurrent
                     : styles.timelineLabelUpcoming;
+
                 return (
                   <View key={step.id} style={styles.timelineRow}>
                     <View style={styles.timelineAxis}>
                       <View style={[styles.timelineNode, nodeStyle]} />
-                      {!isLast ? <View style={[styles.timelineConnector, step.status === 'completed' ? styles.timelineConnectorActive : null]} /> : null}
+                      {!isLast ? (
+                        <View
+                          style={[
+                            styles.timelineConnector,
+                            step.status === 'completed' ? styles.timelineConnectorActive : null,
+                          ]}
+                        />
+                      ) : null}
                     </View>
-                    <Text variant="sm" style={[styles.timelineLabel, labelStyle]}>
+                    <Text variant="sm" style={[styles.timelineLabel, labelStyle]} numberOfLines={1}>
                       {step.label}
                     </Text>
                   </View>
@@ -279,13 +330,22 @@ export const MissionSummaryScreen = () => {
               })}
             </View>
           </AnimatedView>
-
-          <AnimatedView style={[styles.actionsCard, buildSectionStyle(actionsDriver)]}>
-            <ActionButton label="invia messaggio" tone="primary" onPress={handleMessage} />
-            <ActionButton label="annulla missione" tone="danger" onPress={handleCancelMission} />
-          </AnimatedView>
         </AnimatedScrollView>
-      </SafeAreaView>
+
+        <AnimatedView
+          style={[
+            styles.actionBar,
+            buildBottomBarStyle(actionsDriver),
+            {
+              paddingBottom: insets.bottom + theme.space.lg,
+              paddingHorizontal: theme.space['2xl'],
+            },
+          ]}
+        >
+          <ActionButton label="Apri chat" tone="primary" onPress={handleMessage} />
+          <ActionButton label="Annulla" tone="danger" onPress={handleCancelMission} />
+        </AnimatedView>
+      </View>
     </LinearGradient>
   );
 };
@@ -293,13 +353,13 @@ export const MissionSummaryScreen = () => {
 const statusToneToColor = (tone: ActiveMissionModel['statusTone']) => {
   switch (tone) {
     case 'warning':
-      return theme.colors.warning;
+      return 'rgba(250,204,21,0.82)';
     case 'review':
-      return theme.colors.accent;
+      return 'rgba(147,51,234,0.82)';
     case 'muted':
       return 'rgba(255,255,255,0.6)';
     default:
-      return theme.colors.success;
+      return 'rgba(34,197,94,0.82)';
   }
 };
 
@@ -321,59 +381,43 @@ const styles = StyleSheet.create({
   safe: {
     flex: 1,
   },
-  content: {
-    paddingHorizontal: theme.space['2xl'],
-    paddingBottom: theme.space['4xl'],
-    paddingTop: theme.space['2xl'],
-    gap: theme.space['2xl'],
-  },
-  headerRow: {
+  topBar: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-  },
-  statusBlock: {
-    gap: theme.space.xs,
+    backgroundColor: 'rgba(14,17,23,0.74)',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(255,255,255,0.08)',
+    zIndex: 2,
   },
   statusLabel: {
-    textTransform: 'uppercase',
-    letterSpacing: 0.4,
+    letterSpacing: 0.1,
+  },
+  topBarMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.space.md,
   },
   etaLabel: {
     color: 'rgba(255,255,255,0.85)',
   },
-  headerActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.space.sm,
-  },
-  iconButton: {
+  closeButton: {
     borderRadius: theme.radius.full,
     padding: theme.space.xs,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.18)',
-    backgroundColor: 'rgba(12,15,20,0.4)',
   },
-  iconButtonPressed: {
+  closeButtonPressed: {
     opacity: theme.opacity.pressed,
   },
   closeLabel: {
-    color: theme.colors.onPrimary,
+    color: 'rgba(255,255,255,0.9)',
   },
-  dotsIcon: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  dot: {
-    width: 6,
-    height: 6,
-    borderRadius: theme.radius.full,
-    backgroundColor: 'rgba(255,255,255,0.75)',
-  },
-  profileCard: {
+  glassCard: {
     borderRadius: theme.radius.xl,
-    backgroundColor: 'rgba(12,15,20,0.4)',
+    backgroundColor: 'rgba(255,255,255,0.06)',
     padding: theme.space['2xl'],
     gap: theme.space.lg,
     ...theme.shadow.soft,
@@ -389,7 +433,7 @@ const styles = StyleSheet.create({
     borderRadius: theme.radius.full,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.24)',
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: 'rgba(255,255,255,0.12)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -401,61 +445,42 @@ const styles = StyleSheet.create({
     gap: theme.space.xs,
   },
   profileName: {
-    color: theme.colors.onPrimary,
+    color: 'rgba(255,255,255,0.92)',
   },
   profileStats: {
-    color: 'rgba(255,255,255,0.7)',
+    color: 'rgba(255,255,255,0.72)',
   },
-  divider: {
-    height: 1,
-    backgroundColor: 'rgba(255,255,255,0.08)',
+  detailStack: {
+    gap: theme.space.sm,
   },
   missionTitle: {
-    color: theme.colors.onPrimary,
+    color: 'rgba(255,255,255,0.92)',
   },
-  missionDescription: {
+  missionRoute: {
     color: 'rgba(255,255,255,0.78)',
   },
   missionNotes: {
-    color: 'rgba(255,255,255,0.58)',
+    color: 'rgba(255,255,255,0.65)',
   },
-  progressSection: {
-    gap: theme.space.sm,
+  progressRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.space.md,
   },
   progressTrack: {
-    height: theme.space.md,
+    flex: 1,
+    height: 8,
     borderRadius: theme.radius.full,
-    backgroundColor: 'rgba(14,17,24,0.6)',
+    backgroundColor: '#222832',
     overflow: 'hidden',
-    position: 'relative',
   },
   progressFill: {
-    position: 'absolute',
-    top: 0,
-    bottom: 0,
-    left: 0,
+    ...StyleSheet.absoluteFillObject,
     borderRadius: theme.radius.full,
     backgroundColor: theme.colors.primary,
   },
-  progressInnerShadow: {
-    ...StyleSheet.absoluteFillObject,
-    borderRadius: theme.radius.full,
-    borderWidth: 1,
-    borderColor: 'rgba(12,15,20,0.4)',
-  },
   progressLabel: {
-    color: 'rgba(255,255,255,0.68)',
-    alignSelf: 'flex-end',
-  },
-  roadmapCard: {
-    borderRadius: theme.radius.xl,
-    backgroundColor: 'rgba(12,15,20,0.4)',
-    padding: theme.space['2xl'],
-    gap: theme.space.lg,
-    ...theme.shadow.soft,
-  },
-  roadmapTitle: {
-    color: 'rgba(255,255,255,0.8)',
+    color: 'rgba(255,255,255,0.72)',
   },
   timeline: {
     gap: theme.space.md,
@@ -469,8 +494,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   timelineNode: {
-    width: theme.space.sm,
-    height: theme.space.sm,
+    width: 12,
+    height: 12,
     borderRadius: theme.radius.full,
     borderWidth: 2,
   },
@@ -479,18 +504,18 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.primary,
   },
   timelineNodeCurrent: {
-    borderColor: theme.colors.accent,
-    backgroundColor: 'rgba(24,29,40,0.9)',
+    borderColor: theme.colors.primary,
+    backgroundColor: 'rgba(23,27,35,0.96)',
   },
   timelineNodeUpcoming: {
-    borderColor: 'rgba(255,255,255,0.25)',
+    borderColor: 'rgba(255,255,255,0.32)',
     backgroundColor: 'transparent',
   },
   timelineConnector: {
     width: 2,
     flex: 1,
     backgroundColor: 'rgba(255,255,255,0.12)',
-    marginTop: theme.space.xs,
+    marginTop: 2,
   },
   timelineConnectorActive: {
     backgroundColor: theme.colors.primary,
@@ -499,23 +524,34 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   timelineLabelCompleted: {
-    color: theme.colors.onPrimary,
+    color: 'rgba(255,255,255,0.9)',
   },
   timelineLabelCurrent: {
-    color: theme.colors.onPrimary,
+    color: 'rgba(255,255,255,0.92)',
     fontWeight: theme.fontWeight.medium,
   },
   timelineLabelUpcoming: {
-    color: 'rgba(255,255,255,0.55)',
+    color: 'rgba(255,255,255,0.6)',
   },
-  actionsCard: {
+  actionBar: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: theme.space.md,
-    alignItems: 'stretch',
+    paddingTop: theme.space.md,
+    backgroundColor: 'rgba(14,17,23,0.78)',
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(255,255,255,0.08)',
   },
   actionButton: {
+    flex: 1,
     borderRadius: theme.radius.full,
     paddingVertical: theme.space.sm,
     paddingHorizontal: theme.space['2xl'],
+    minHeight: theme.touch.targetMin,
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
@@ -524,13 +560,12 @@ const styles = StyleSheet.create({
     opacity: theme.opacity.pressed,
   },
   actionButtonLabel: {
-    textTransform: 'uppercase',
-    letterSpacing: 0.6,
+    letterSpacing: 0.3,
   },
   actionButtonOverlay: {
     ...StyleSheet.absoluteFillObject,
     borderRadius: theme.radius.full,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.14)',
+    borderColor: 'rgba(255,255,255,0.15)',
   },
 });

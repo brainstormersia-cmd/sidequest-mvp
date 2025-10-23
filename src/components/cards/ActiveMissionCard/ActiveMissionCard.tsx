@@ -20,13 +20,13 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 const statusToneToColor = (tone: ActiveMissionCardProps['statusTone'] = 'success') => {
   switch (tone) {
     case 'warning':
-      return theme.colors.warning;
+      return 'rgba(250, 204, 21, 0.82)';
     case 'review':
-      return theme.colors.accent;
+      return 'rgba(147, 51, 234, 0.82)';
     case 'muted':
       return 'rgba(255,255,255,0.64)';
     default:
-      return theme.colors.success;
+      return 'rgba(34, 197, 94, 0.82)';
   }
 };
 
@@ -48,14 +48,12 @@ const clampProgress = (value: number) => {
   return Math.max(0, Math.min(1, value));
 };
 
-const ChatGlyph = () => {
-  return (
-    <View style={styles.chatGlyph}>
-      <View style={styles.chatBubble} />
-      <View style={styles.chatTail} />
-    </View>
-  );
-};
+const ChatGlyph = () => (
+  <View style={styles.chatGlyph}>
+    <View style={styles.chatBubble} />
+    <View style={styles.chatTail} />
+  </View>
+);
 
 export const ActiveMissionCard: React.FC<ActiveMissionCardProps> = React.memo(
   ({
@@ -185,13 +183,13 @@ export const ActiveMissionCard: React.FC<ActiveMissionCardProps> = React.memo(
         style={[styles.wrapper, animatedCardStyle]}
       >
         <LinearGradient
-          colors={['#0F1117', '#181C24']}
+          colors={['rgba(14,17,23,0.96)', 'rgba(23,27,35,0.96)']}
           start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
+          end={{ x: 0, y: 1 }}
           style={styles.card}
         >
           <View style={styles.headerRow}>
-            <Text variant="xs" weight="medium" style={[styles.statusLabel, { color: statusColor }]} numberOfLines={1}>
+            <Text variant="sm" weight="medium" style={[styles.statusLabel, { color: statusColor }]} numberOfLines={1}>
               {statusLabel}
             </Text>
             <View style={styles.headerMeta}>
@@ -208,7 +206,7 @@ export const ActiveMissionCard: React.FC<ActiveMissionCardProps> = React.memo(
                   {...a11yButtonProps('Apri chat missione')}
                   hitSlop={HITSLOP_44}
                   onPress={handlePressChat}
-                  style={({ pressed }) => [styles.chatButton, pressed ? styles.chatButtonPressed : null]}
+                  style={({ pressed }) => [styles.chatTouch, pressed ? styles.chatTouchPressed : null]}
                 >
                   <ChatGlyph />
                 </Pressable>
@@ -237,10 +235,9 @@ export const ActiveMissionCard: React.FC<ActiveMissionCardProps> = React.memo(
           <View style={styles.progressBlock}>
             <View style={styles.progressTrack} onLayout={handleTrackLayout}>
               <Animated.View style={[styles.progressFill, progressStyle]} />
-              <View style={styles.progressInnerShadow} pointerEvents="none" />
             </View>
             {progressLabel ? (
-              <Text variant="xs" style={styles.progressLabel} numberOfLines={1}>
+              <Text variant="xs" weight="medium" style={styles.progressLabel} numberOfLines={1}>
                 {progressLabel}
               </Text>
             ) : null}
@@ -263,7 +260,7 @@ const styles = StyleSheet.create({
     borderRadius: theme.radius.lg,
     paddingVertical: theme.space['2xl'],
     paddingHorizontal: theme.space['2xl'],
-    gap: theme.space.xl,
+    gap: theme.space.lg,
   },
   headerRow: {
     flexDirection: 'row',
@@ -271,8 +268,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   statusLabel: {
-    letterSpacing: 0.2,
-    textTransform: 'uppercase',
+    letterSpacing: 0.1,
   },
   headerMeta: {
     flexDirection: 'row',
@@ -280,21 +276,18 @@ const styles = StyleSheet.create({
     gap: theme.space.md,
   },
   timerLabel: {
-    color: 'rgba(255,255,255,0.72)',
+    color: 'rgba(255,255,255,0.85)',
   },
-  chatButton: {
+  chatTouch: {
     borderRadius: theme.radius.full,
     padding: theme.space.xs,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.12)',
-    backgroundColor: 'rgba(15,17,23,0.24)',
   },
-  chatButtonPressed: {
+  chatTouchPressed: {
     opacity: theme.opacity.pressed,
   },
   chatGlyph: {
-    width: theme.space.lg,
-    height: theme.space.lg,
+    width: 20,
+    height: 20,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -302,17 +295,17 @@ const styles = StyleSheet.create({
     width: '70%',
     height: '55%',
     borderRadius: theme.radius.md,
-    borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.8)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.86)',
   },
   chatTail: {
     width: '30%',
-    height: 8,
-    borderBottomWidth: 2,
-    borderRightWidth: 2,
-    borderColor: 'rgba(255,255,255,0.8)',
+    height: 6,
+    borderBottomWidth: 1.5,
+    borderRightWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.86)',
     borderBottomRightRadius: theme.radius.sm,
-    transform: [{ translateY: -2 }, { translateX: -4 }, { rotate: '45deg' }],
+    transform: [{ translateY: -2 }, { translateX: -3 }, { rotate: '45deg' }],
   },
   identityRow: {
     flexDirection: 'row',
@@ -326,7 +319,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.24)',
+    borderColor: 'rgba(255,255,255,0.18)',
     backgroundColor: 'rgba(255,255,255,0.08)',
   },
   avatarText: {
@@ -337,18 +330,21 @@ const styles = StyleSheet.create({
     gap: theme.space.xs,
   },
   doerName: {
-    color: theme.colors.onPrimary,
+    color: 'rgba(255,255,255,0.92)',
   },
   doerSummary: {
-    color: 'rgba(255,255,255,0.72)',
+    color: 'rgba(255,255,255,0.7)',
   },
   progressBlock: {
-    gap: theme.space.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.space.md,
   },
   progressTrack: {
-    height: theme.space.sm,
+    flex: 1,
+    height: 8,
     borderRadius: theme.radius.full,
-    backgroundColor: 'rgba(20,25,32,0.72)',
+    backgroundColor: '#222832',
     overflow: 'hidden',
     position: 'relative',
   },
@@ -360,14 +356,9 @@ const styles = StyleSheet.create({
     borderRadius: theme.radius.full,
     backgroundColor: theme.colors.primary,
   },
-  progressInnerShadow: {
-    ...StyleSheet.absoluteFillObject,
-    borderRadius: theme.radius.full,
-    borderWidth: 1,
-    borderColor: 'rgba(13,17,23,0.32)',
-  },
   progressLabel: {
-    alignSelf: 'flex-end',
-    color: 'rgba(255,255,255,0.64)',
+    color: 'rgba(255,255,255,0.72)',
+    textAlign: 'right',
+    minWidth: 84,
   },
 });

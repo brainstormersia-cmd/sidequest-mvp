@@ -26,6 +26,8 @@ export const Text = ({ children, variant = 'sm', weight = 'regular', style, ...r
 const styles = StyleSheet.create({
   base: {
     color: theme.colors.textPrimary,
+    textAlignVertical: 'center',
+    includeFontPadding: false,
   },
   xs: {
     fontSize: theme.typography.xs,
