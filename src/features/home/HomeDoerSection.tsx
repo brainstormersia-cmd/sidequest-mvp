@@ -82,7 +82,10 @@ export const HomeDoerSection: React.FC<Props> = ({ onExploreAll }) => {
             key={filter}
             {...a11yButtonProps(`Filtra missioni: ${filter}`)}
             hitSlop={HITSLOP_44}
-            style={({ pressed }) => [styles.filterChip, pressed ? styles.filterChipPressed : null]}
+            style={({ pressed }) => [
+              styles.filterChip,
+              pressed ? styles.filterChipPressed : null,
+            ]}
             onPress={onExploreAll}
           >
             <Text variant="xs" weight="medium" style={styles.filterText}>
@@ -120,7 +123,10 @@ export const HomeDoerSection: React.FC<Props> = ({ onExploreAll }) => {
               <Pressable
                 {...a11yButtonProps('Candidati alla missione')}
                 hitSlop={HITSLOP_44}
-                style={({ pressed }) => [styles.missionCta, pressed ? styles.missionCtaPressed : null]}
+                style={({ pressed }) => [
+                  styles.missionCta,
+                  pressed ? styles.missionCtaPressed : null,
+                ]}
                 onPress={onExploreAll}
               >
                 <Text variant="sm" weight="medium" style={styles.missionCtaText}>
@@ -181,10 +187,12 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.border,
     paddingHorizontal: theme.spacing.lg,
     paddingVertical: theme.spacing.md,
+    gap: theme.spacing.lg,
   },
   balanceBlock: {
     flex: 1,
     alignItems: 'flex-start',
+    minWidth: '45%',
   },
   balanceLabel: {
     color: theme.colors.textSecondary,
@@ -193,7 +201,7 @@ const styles = StyleSheet.create({
     color: theme.colors.textPrimary,
   },
   balanceDivider: {
-    width: 1,
+    width: StyleSheet.hairlineWidth,
     height: '60%',
     backgroundColor: theme.colors.border,
   },
@@ -203,15 +211,15 @@ const styles = StyleSheet.create({
     gap: theme.spacing.sm,
   },
   filterChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: theme.spacing.sm,
     borderRadius: theme.radius.md,
     borderWidth: 1,
     borderColor: theme.colors.border,
     backgroundColor: theme.colors.surface,
   },
   filterChipPressed: {
-    opacity: 0.85,
+    opacity: theme.opacity.pressed,
   },
   filterText: {
     color: theme.colors.textSecondary,
@@ -244,25 +252,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: theme.spacing.sm,
     gap: theme.spacing.sm,
+    flexWrap: 'wrap',
   },
   missionMeta: {
     color: theme.colors.textSecondary,
   },
   metaDivider: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
+    minWidth: theme.spacing.xxs,
+    minHeight: theme.spacing.xxs,
+    aspectRatio: 1,
+    borderRadius: theme.radius.full,
     backgroundColor: theme.colors.border,
   },
   missionCta: {
     marginTop: theme.spacing.md,
     borderRadius: theme.radius.md,
     backgroundColor: theme.colors.primary,
-    paddingVertical: 12,
+    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.md,
     alignItems: 'center',
   },
   missionCtaPressed: {
-    opacity: 0.9,
+    opacity: theme.opacity.pressed,
   },
   missionCtaText: {
     color: theme.colors.onPrimary,
@@ -277,12 +288,14 @@ const styles = StyleSheet.create({
     gap: theme.spacing.sm,
   },
   emptyIllustration: {
-    width: 88,
-    height: 88,
-    borderRadius: 32,
+    minWidth: theme.spacing['4xl'],
+    minHeight: theme.spacing['4xl'],
+    aspectRatio: 1,
+    borderRadius: theme.radius.full,
     backgroundColor: theme.colors.surfaceAlt,
     borderWidth: 1,
     borderColor: theme.colors.border,
+    alignSelf: 'center',
   },
   emptyTitle: {
     color: theme.colors.textPrimary,

@@ -9,16 +9,20 @@ type Props = TextInputProps & {
   error?: boolean;
 };
 
-export const Input = ({ label, assistiveText, error = false, style, ...rest }: Props) => {
+export const Input = ({ label, assistiveText, error = false, style, accessibilityHint, ...rest }: Props) => {
+  const hint = error && assistiveText ? assistiveText : accessibilityHint;
+
   return (
     <View style={styles.container}>
-      <Text variant="xs" weight="medium" accessibilityRole="label">{label}</Text>
+      <Text variant="xs" weight="medium" accessibilityRole="text">
+        {label}
+      </Text>
       <TextInput
         style={[styles.input, error ? styles.inputError : null, style]}
         placeholderTextColor={theme.colors.textSecondary}
         maxFontSizeMultiplier={1.3}
         accessibilityLabel={label}
-        accessibilityState={{ invalid: error }}
+        accessibilityHint={hint}
         {...rest}
       />
       {assistiveText ? (
@@ -42,7 +46,7 @@ const styles = StyleSheet.create({
     color: theme.colors.textPrimary,
     paddingHorizontal: theme.spacing.sm,
     paddingVertical: theme.spacing.sm,
-    minHeight: 44,
+    minHeight: theme.touch.targetMin,
   },
   inputError: {
     borderColor: theme.colors.error,

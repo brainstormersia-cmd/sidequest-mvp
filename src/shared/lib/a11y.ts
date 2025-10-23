@@ -1,6 +1,12 @@
 import { AccessibilityInfo, AccessibilityProps, Insets, Platform } from 'react-native';
+import { theme } from './theme';
 
-export const HITSLOP_44: Insets = { top: 12, bottom: 12, left: 12, right: 12 };
+export const HITSLOP_44: Insets = {
+  top: theme.touch.hitSlop,
+  bottom: theme.touch.hitSlop,
+  left: theme.touch.hitSlop,
+  right: theme.touch.hitSlop,
+};
 
 export const a11yButtonProps = (label: string): AccessibilityProps => ({
   accessible: true,

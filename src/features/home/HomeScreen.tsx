@@ -1,5 +1,14 @@
-import React, { useMemo } from 'react';
-import { Pressable, SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
+import React, { useEffect, useMemo, useRef } from 'react';
+import {
+  Alert,
+  Animated,
+  Easing,
+  Pressable,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
@@ -13,43 +22,50 @@ import { useRole, Role } from '../../shared/state/roleStore';
 import { HomeDoerSection } from './HomeDoerSection';
 import { HomeGiverSection } from './HomeGiverSection';
 import { a11yButtonProps, HITSLOP_44 } from '../../shared/lib/a11y';
+import { useGiverHomeState } from './useGiverHomeState';
+import * as Haptics from 'expo-haptics';
 
-const RoleToggleOption = ({
-  label,
-  value,
-  isActive,
-  onPress,
-}: {
-  label: string;
-  value: Role;
-  isActive: boolean;
-  onPress: (role: Role) => void;
-}) => (
-  <Pressable
-    {...a11yButtonProps(label)}
-    accessibilityState={{ selected: isActive }}
-    onPress={() => onPress(value)}
-    hitSlop={HITSLOP_44}
-    style={({ pressed }) => [
-      styles.toggleOption,
-      isActive ? styles.toggleOptionActive : null,
-      pressed ? styles.toggleOptionPressed : null,
-    ]}
-  >
-    <Text
-      variant="sm"
-      weight={isActive ? 'bold' : 'medium'}
-      style={isActive ? styles.toggleTextActive : styles.toggleText}
+const RoleToggleOption = React.memo(
+  ({
+    label,
+    value,
+    isActive,
+    onPress,
+  }: {
+    label: string;
+    value: Role;
+    isActive: boolean;
+    onPress: (role: Role) => void;
+  }) => (
+    <Pressable
+      {...a11yButtonProps(label)}
+      accessibilityState={{ selected: isActive }}
+      onPress={() => onPress(value)}
+      hitSlop={HITSLOP_44}
+      style={({ pressed }) => [
+        styles.toggleOption,
+        isActive ? styles.toggleOptionActive : null,
+        pressed ? styles.toggleOptionPressed : null,
+      ]}
     >
-      {label}
-    </Text>
-  </Pressable>
+      <Text
+        variant="sm"
+        weight={isActive ? 'bold' : 'medium'}
+        style={isActive ? styles.toggleTextActive : styles.toggleText}
+      >
+        {label}
+      </Text>
+    </Pressable>
+  ),
 );
+RoleToggleOption.displayName = 'RoleToggleOption';
 
 export const HomeScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { openSheet } = useModalSheet();
   const { role, setRole } = useRole();
+  const giverState = useGiverHomeState();
+  const stickyCta = useRef(new Animated.Value(role === 'giver' ? 1 : 0)).current;
 
   const headerCopy = useMemo(
     () =>
@@ -72,36 +88,105 @@ export const HomeScreen = () => {
     navigation.navigate('Profile');
   };
 
-  const handleCreateMission = () => {
+  const openCreateMissionSheet = React.useCallback(() => {
     openSheet(CreateMissionSheet, undefined, {
       title: 'Nuova missione',
       accessibilityLabel: 'Nuova missione',
     });
-  };
+  }, [openSheet]);
+
+  const handleStickyCreateMission = React.useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => undefined);
+    openCreateMissionSheet();
+  }, [openCreateMissionSheet]);
+
+  const handleOpenMission = React.useCallback(
+    (_missionId: string) => {
+      navigation.navigate('Missions');
+    },
+    [navigation],
+  );
+
+  const handleOpenChat = React.useCallback(
+    (missionId: string) => {
+      Alert.alert('Chat missione', `Apri conversazione per la missione ${missionId}`);
+    },
+    [],
+  );
+
+  const handleViewAllActive = React.useCallback(() => {
+    navigation.navigate('Missions');
+  }, [navigation]);
+
+  const handleOpenExamples = React.useCallback(() => {
+    navigation.navigate('Missions');
+  }, [navigation]);
+
+  const handleLongPressRecent = React.useCallback(
+    (missionId: string) => {
+      Alert.alert('Azioni missione', `Duplica o elimina la missione ${missionId}`, [
+        { text: 'Duplica', onPress: openCreateMissionSheet },
+        { text: 'Elimina', style: 'destructive' },
+        { text: 'Annulla', style: 'cancel' },
+      ]);
+    },
+    [openCreateMissionSheet],
+  );
+
+  useEffect(() => {
+    Animated.timing(stickyCta, {
+      toValue: role === 'giver' ? 1 : 0,
+      duration: theme.motion.duration.fast,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
+  }, [role, stickyCta]);
+
+  const stickyCtaStyle = React.useMemo(
+    () => ({
+      opacity: stickyCta,
+      transform: [
+        {
+          translateY: stickyCta.interpolate({
+            inputRange: [0, 1],
+            outputRange: [theme.space.md, 0],
+          }),
+        },
+      ],
+    }),
+    [stickyCta],
+  );
 
   return (
     <SafeAreaView style={styles.safe}>
       <StatusBar style="dark" />
       <View style={styles.container}>
-        <View style={styles.header}>
-          <View style={styles.headerCopy}>
-            <Text variant="lg" weight="bold" style={styles.headerTitle}>
-              {headerCopy.title}
-            </Text>
-            <Spacer size="xs" />
-            <Text variant="sm" style={styles.headerSubtitle}>
-              {headerCopy.subtitle}
-            </Text>
+        {role === 'doer' ? (
+          <View style={styles.header}>
+            <View style={styles.headerCopy}>
+              <Text variant="lg" weight="bold" style={styles.headerTitle}>
+                {headerCopy.title}
+              </Text>
+              <Spacer size="xs" />
+              <Text variant="sm" style={styles.headerSubtitle}>
+                {headerCopy.subtitle}
+              </Text>
+            </View>
+            <Pressable
+              {...a11yButtonProps(headerCopy.actionLabel)}
+              onPress={handleOpenAction}
+              hitSlop={HITSLOP_44}
+              style={({ pressed }) => [
+                styles.headerAction,
+                pressed ? styles.headerActionPressed : null,
+              ]}
+            >
+              <View style={styles.actionDot} />
+            </Pressable>
           </View>
-          <Pressable
-            {...a11yButtonProps(headerCopy.actionLabel)}
-            onPress={handleOpenAction}
-            hitSlop={HITSLOP_44}
-            style={({ pressed }) => [styles.headerAction, pressed ? styles.headerActionPressed : null]}
-          >
-            <View style={styles.actionDot} />
-          </Pressable>
-        </View>
+        ) : (
+          <View style={styles.giverHeaderPlaceholder} />
+        )}
 
         <View style={styles.toggle}>
           <RoleToggleOption label="Doer" value="doer" isActive={role === 'doer'} onPress={setRole} />
@@ -110,16 +195,45 @@ export const HomeScreen = () => {
 
         <Spacer size="md" />
 
-        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          contentInsetAdjustmentBehavior="automatic"
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
           {role === 'doer' ? (
             <HomeDoerSection onExploreAll={() => navigation.navigate('Missions')} />
           ) : (
             <HomeGiverSection
-              onCreateMission={handleCreateMission}
-              onManageListings={() => navigation.navigate('Missions')}
+              state={giverState}
+              onCreateMission={openCreateMissionSheet}
+              onOpenMission={handleOpenMission}
+              onOpenChat={handleOpenChat}
+              onViewAllActive={handleViewAllActive}
+              onOpenProfile={() => navigation.navigate('Profile')}
+              onOpenExamples={handleOpenExamples}
+              onLongPressRecent={handleLongPressRecent}
             />
           )}
         </ScrollView>
+        {role === 'giver' ? (
+          <Animated.View style={[styles.stickyCtaContainer, stickyCtaStyle]}>
+            <Pressable
+              {...a11yButtonProps('+ Crea missione')}
+              onPress={handleStickyCreateMission}
+              hitSlop={HITSLOP_44}
+              style={({ pressed }) => [
+                styles.stickyCta,
+                pressed ? styles.stickyCtaPressed : null,
+              ]}
+            >
+              <Text variant="md" weight="bold" style={styles.stickyCtaLabel}>
+                + Crea missione
+              </Text>
+            </Pressable>
+          </Animated.View>
+        ) : null}
       </View>
     </SafeAreaView>
   );
@@ -152,9 +266,10 @@ const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
   },
   headerAction: {
-    width: 48,
-    height: 48,
-    borderRadius: 16,
+    flexShrink: 0,
+    minHeight: theme.touch.targetMin,
+    minWidth: theme.touch.targetMin,
+    borderRadius: theme.radius.full,
     borderWidth: 1,
     borderColor: theme.colors.border,
     backgroundColor: theme.colors.surface,
@@ -162,19 +277,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   headerActionPressed: {
-    opacity: 0.85,
+    opacity: theme.opacity.pressed,
   },
   actionDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+    minHeight: theme.spacing.sm,
+    minWidth: theme.spacing.sm,
+    aspectRatio: 1,
+    borderRadius: theme.radius.full,
     backgroundColor: theme.colors.primary,
   },
   toggle: {
     marginTop: theme.spacing.md,
     flexDirection: 'row',
     backgroundColor: theme.colors.surface,
-    padding: 4,
+    padding: theme.spacing.xxs,
     borderRadius: theme.radius.lg,
     borderWidth: 1,
     borderColor: theme.colors.border,
@@ -183,14 +299,14 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 12,
+    paddingVertical: theme.spacing.sm,
     borderRadius: theme.radius.md,
   },
   toggleOptionActive: {
     backgroundColor: theme.colors.primary,
   },
   toggleOptionPressed: {
-    opacity: 0.9,
+    opacity: theme.opacity.pressed,
   },
   toggleText: {
     color: theme.colors.textSecondary,
@@ -200,7 +316,35 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingTop: theme.spacing.lg,
-    paddingBottom: theme.spacing.xl,
+    paddingBottom: theme.spacing['4xl'],
     gap: theme.spacing.lg,
+  },
+  giverHeaderPlaceholder: {
+    minHeight: theme.spacing.lg,
+  },
+  stickyCtaContainer: {
+    marginTop: theme.spacing.lg,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.radius.lg,
+    padding: theme.spacing.sm,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    shadowColor: '#0B0C0E14',
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: theme.elevation.level1,
+  },
+  stickyCta: {
+    minHeight: theme.touch.targetMin,
+    borderRadius: theme.radius.md,
+    backgroundColor: theme.colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stickyCtaPressed: {
+    opacity: theme.opacity.pressed,
+  },
+  stickyCtaLabel: {
+    color: theme.colors.onPrimary,
   },
 });

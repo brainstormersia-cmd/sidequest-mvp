@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable, PressableProps, StyleSheet } from 'react-native';
+import { Pressable, PressableProps, StyleProp, StyleSheet, ViewStyle } from 'react-native';
 import { Text } from './Text';
 import { theme } from '../lib/theme';
 import { HITSLOP_44, a11yButtonProps } from '../lib/a11y';
@@ -15,19 +15,21 @@ export const Chip = ({ label, active = false, style, disabled, ...rest }: Props)
     accessibilityState={{ selected: active, disabled }}
     hitSlop={HITSLOP_44}
     disabled={disabled}
-    style={({ pressed }) => [
-      styles.base,
-      active ? styles.active : null,
-      disabled ? styles.disabled : null,
-      { opacity: pressed ? 0.9 : 1 },
-      style,
-    ]}
+    style={({ pressed }) =>
+      [
+        styles.base,
+        active ? styles.active : null,
+        disabled ? styles.disabled : null,
+        { opacity: pressed ? theme.opacity.pressed : 1 },
+        style,
+      ] as StyleProp<ViewStyle>
+    }
     {...rest}
   >
     <Text
       variant="xs"
       weight="medium"
-      style={{ color: active ? theme.colors.background : theme.colors.textSecondary }}
+      style={{ color: active ? theme.colors.onPrimary : theme.colors.textSecondary }}
     >
       {label}
     </Text>
@@ -48,6 +50,6 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.primary,
   },
   disabled: {
-    opacity: 0.6,
+    opacity: theme.opacity.disabled,
   },
 });
