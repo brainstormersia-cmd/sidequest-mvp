@@ -68,6 +68,20 @@ export const tokens = {
     level1: 2,
     level2: 4,
   },
+  shadow: {
+    soft: {
+      shadowColor: 'rgba(15, 17, 23, 0.35)',
+      shadowOffset: { width: 0, height: 16 },
+      shadowOpacity: 1,
+      shadowRadius: 32,
+    },
+    medium: {
+      shadowColor: 'rgba(15, 17, 23, 0.45)',
+      shadowOffset: { width: 0, height: 24 },
+      shadowOpacity: 1,
+      shadowRadius: 40,
+    },
+  },
   opacity: {
     disabled: 0.4,
     overlay: 0.08,
@@ -121,6 +135,7 @@ export const theme = {
   opacity: tokens.opacity,
   motion: tokens.motion,
   touch: tokens.touch,
+  shadow: tokens.shadow,
 };
 
 export type Theme = typeof theme;
