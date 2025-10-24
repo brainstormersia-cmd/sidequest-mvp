@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Pressable, LayoutAnimation } from 'react-native';
-import { Text } from '../../../shared/ui/Text';
-import { useTokens } from '../../../shared/lib/theme';
+import { Text } from '../../../../shared/ui/Text';
+import { useTokens } from '../../../../shared/lib/theme';
 import { useWizard } from '../context';
 import { formatPrice, formatTip, formatWhen, formatWhere } from '../utils/format';
 

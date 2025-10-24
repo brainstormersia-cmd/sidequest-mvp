@@ -1,7 +1,7 @@
 import React from 'react';
 import { TextInput, View, TextInputProps, Pressable, GestureResponderEvent, PanResponder, PanResponderInstance } from 'react-native';
-import { Text } from '../../../shared/ui/Text';
-import { useTokens } from '../../../shared/lib/theme';
+import { Text } from '../../../../shared/ui/Text';
+import { useTokens } from '../../../../shared/lib/theme';
 import { MissionQualityLevel } from '../types';
 
 export type FieldTextProps = TextInputProps & {

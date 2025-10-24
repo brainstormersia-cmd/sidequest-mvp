@@ -1,8 +1,8 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { strings } from '../../../config/strings';
-import { Text } from '../../../shared/ui/Text';
-import { theme } from '../../../shared/lib/theme';
+import { strings } from '../../../../config/strings';
+import { Text } from '../../../../shared/ui/Text';
+import { theme } from '../../../../shared/lib/theme';
 import { MissionDraft } from './Step1Basics';
 
 type Props = {

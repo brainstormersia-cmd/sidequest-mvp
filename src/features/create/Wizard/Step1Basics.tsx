@@ -1,8 +1,8 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { Input } from '../../../shared/ui/Input';
-import { strings } from '../../../config/strings';
-import { theme } from '../../../shared/lib/theme';
+import { Input } from '../../../../shared/ui/Input';
+import { strings } from '../../../../config/strings';
+import { theme } from '../../../../shared/lib/theme';
 
 export type MissionDraft = {
   title: string;

@@ -1,7 +1,7 @@
 import React from 'react';
 import { View } from 'react-native';
-import { Text } from '../../../shared/ui/Text';
-import { useTokens } from '../../../shared/lib/theme';
+import { Text } from '../../../../shared/ui/Text';
+import { useTokens } from '../../../../shared/lib/theme';
 
 type Props = {
   address: string;
