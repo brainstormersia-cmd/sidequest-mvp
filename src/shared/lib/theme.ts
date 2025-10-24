@@ -184,9 +184,11 @@ export const TokensProvider = ({
   children: React.ReactNode;
 }) => {
   const deviceScheme = useColorScheme();
-  const activeMode = mode ?? deviceScheme ?? 'light';
+  const activeMode = (mode ?? deviceScheme ?? 'light') as 'light' | 'dark';
   const value = useMemo(() => (activeMode === 'dark' ? darkTokens : lightTokens), [activeMode]);
-  return <TokensContext.Provider value={value}>{children}</TokensContext.Provider>;
+
+  // NIENTE JSX in .ts: uso createElement
+  return React.createElement(TokensContext.Provider, { value }, children);
 };
 
 export const useTokens = () => useContext(TokensContext);
