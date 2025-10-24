@@ -22,36 +22,36 @@ export const EmptyMissionPlaceholderCard = memo(
     title = 'Non hai ancora programmato nulla',
     cta = 'Aggiungi missione',
   }: Props) => {
-  return (
-    <Pressable
-      {...a11yButtonProps(cta)}
-      hitSlop={HITSLOP_44}
-      onPress={onCreate}
-      style={({ pressed }) => [styles.wrapper, pressed ? styles.wrapperPressed : null]}
-    >
-      <LinearGradient
-        colors={[theme.colors.surfaceAlt, theme.colors.background]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.gradient}
+    const label = cta ?? title;
+
+    return (
+      <Pressable
+        {...a11yButtonProps(label)}
+        hitSlop={HITSLOP_44}
+        onPress={onCreate}
+        style={({ pressed }) => [styles.wrapper, pressed ? styles.wrapperPressed : null]}
       >
-        <View style={styles.center}>
-          <View style={styles.circle}>
-            <Text variant="lg" weight="bold" style={styles.plus}>
-              +
+        <LinearGradient
+          colors={[theme.colors.background, theme.colors.surfaceAlt]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.gradient}
+        >
+          <View style={styles.center}>
+            <View style={styles.circle}>
+              <Text variant="lg" weight="bold" style={styles.plus}>
+                +
+              </Text>
+            </View>
+            <Text variant="sm" weight="medium" style={styles.title}>
+              {cta ? `${title} · ${cta}` : title}
             </Text>
           </View>
-          <Text variant="sm" weight="medium" style={styles.title}>
-            {title}
-          </Text>
-          <Text variant="sm" weight="medium" style={styles.cta}>
-            {cta}
-          </Text>
-        </View>
-      </LinearGradient>
-    </Pressable>
-  );
-});
+        </LinearGradient>
+      </Pressable>
+    );
+  },
+);
 
 EmptyMissionPlaceholderCard.displayName = 'EmptyMissionPlaceholderCard';
 
@@ -80,20 +80,16 @@ const styles = StyleSheet.create({
     height: circleSize,
     borderRadius: theme.radius.full,
     borderWidth: borderThickness,
-    borderColor: theme.colors.borderMuted,
+    borderColor: theme.colors.border,
     borderStyle: 'dashed',
     alignItems: 'center',
     justifyContent: 'center',
   },
   plus: {
-    color: theme.colors.textSubtle,
+    color: theme.colors.border,
   },
   title: {
     color: theme.colors.textSecondary,
-    opacity: theme.opacity.pressed,
-  },
-  cta: {
-    color: theme.colors.textSubtle,
   },
 });
 
