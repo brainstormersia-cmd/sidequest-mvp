@@ -254,6 +254,7 @@ export const ActiveMissionCard: React.FC<ActiveMissionCardProps> = React.memo(
                 </Text>
               </View>
             </View>
+          </View>
 
             <View style={styles.progressBlock}>
               <View style={styles.progressTrack} onLayout={handleTrackLayout}>
@@ -346,7 +347,7 @@ const styles = StyleSheet.create({
   identityRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.space.md,
+    gap: theme.space.lg,
   },
   avatar: {
     width: theme.space['3xl'],
@@ -374,7 +375,7 @@ const styles = StyleSheet.create({
   progressBlock: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.space.sm,
+    gap: theme.space.md,
   },
   progressTrack: {
     flex: 1,
