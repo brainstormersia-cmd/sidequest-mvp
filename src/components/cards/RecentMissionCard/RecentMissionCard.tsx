@@ -5,10 +5,22 @@ import { theme } from '../../../shared/lib/theme';
 import { a11yButtonProps, HITSLOP_44 } from '../../../shared/lib/a11y';
 import { RecentMissionCardProps, RecentMissionStatus } from './RecentMissionCard.types';
 
-const statusMeta: Record<RecentMissionStatus, { label: string; color: string; icon: string }> = {
-  completed: { label: 'Completata', color: theme.colors.success, icon: '🟢' },
-  inProgress: { label: 'In corso', color: theme.colors.warning, icon: '🟠' },
-  draft: { label: 'Bozza', color: theme.colors.textSubtle, icon: '⚪' },
+const statusMeta: Record<RecentMissionStatus, { label: string; accent: string; surface: string }> = {
+  completed: {
+    label: 'Completata',
+    accent: theme.colors.success,
+    surface: 'rgba(34, 197, 94, 0.12)',
+  },
+  inProgress: {
+    label: 'In corso',
+    accent: theme.colors.warning,
+    surface: 'rgba(250, 204, 21, 0.18)',
+  },
+  draft: {
+    label: 'Bozza',
+    accent: theme.colors.textSubtle,
+    surface: 'rgba(15, 17, 23, 0.06)',
+  },
 };
 
 export const RecentMissionCard: React.FC<RecentMissionCardProps> = React.memo(
@@ -31,25 +43,23 @@ export const RecentMissionCard: React.FC<RecentMissionCardProps> = React.memo(
         onPress={onPress}
         onLongPress={onLongPress}
         hitSlop={HITSLOP_44}
-        style={({ pressed }) => [styles.card, pressed ? styles.cardPressed : null]}
+        style={({ pressed }) => [
+          styles.card,
+          { backgroundColor: meta.surface, borderColor: `${meta.accent}33` },
+          pressed ? styles.cardPressed : null,
+        ]}
       >
-        <View style={styles.iconWrapper}>
-          <Text variant="md" style={styles.iconText}>
-            🗂️
-          </Text>
-        </View>
+        <View style={[styles.pill, { backgroundColor: meta.accent }]} />
         <Text variant="sm" weight="medium" numberOfLines={2} style={styles.title}>
           {title}
         </Text>
-        <View style={styles.badge}>
-          <Text variant="xs" weight="medium" style={[styles.badgeText, { color: meta.color }]}>
-            {`${meta.icon} ${meta.label}`}
-          </Text>
-        </View>
-        <Text variant="sm" weight="bold" style={styles.amount}>
+        <Text variant="xs" weight="medium" style={[styles.statusLabel, { color: meta.accent }]} numberOfLines={1}>
+          {meta.label}
+        </Text>
+        <Text variant="md" weight="bold" style={styles.amount} numberOfLines={1}>
           {amount}
         </Text>
-        <Text variant="xs" style={styles.category}>
+        <Text variant="xs" style={styles.category} numberOfLines={1}>
           {categoryLabel}
         </Text>
       </Pressable>
@@ -62,40 +72,27 @@ RecentMissionCard.displayName = 'RecentMissionCard';
 const styles = StyleSheet.create({
   card: {
     width: theme.space['3xl'] * 3,
-    borderRadius: theme.radius.md,
-    backgroundColor: theme.colors.surfaceAlt,
-    padding: theme.space.md,
+    borderRadius: theme.radius.lg,
+    padding: theme.space.lg,
     gap: theme.space.sm,
     borderWidth: 1,
-    borderColor: theme.colors.borderMuted,
+    ...theme.shadow.soft,
   },
   cardPressed: {
     opacity: theme.opacity.pressed,
-    transform: [{ scale: 0.97 }],
+    transform: [{ scale: 0.98 }],
   },
-  iconWrapper: {
-    height: theme.space.xl,
-    width: theme.space.xl,
-    borderRadius: theme.radius.md,
-    backgroundColor: theme.colors.background,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  iconText: {
-    color: theme.colors.textSecondary,
+  pill: {
+    width: theme.space.sm,
+    height: theme.space.sm,
+    borderRadius: theme.radius.full,
   },
   title: {
     color: theme.colors.textPrimary,
   },
-  badge: {
-    borderRadius: theme.radius.full,
-    backgroundColor: theme.colors.background,
-    paddingHorizontal: theme.space.xs,
-    paddingVertical: theme.space.xxs,
-    alignSelf: 'flex-start',
-  },
-  badgeText: {
+  statusLabel: {
     letterSpacing: 0.2,
+    textTransform: 'uppercase',
   },
   amount: {
     color: theme.colors.textPrimary,
