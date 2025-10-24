@@ -166,6 +166,23 @@ export const HomeGiverSection: React.FC<HomeGiverSectionProps> = ({
     <View style={styles.container}>
       <NewsPills items={newsItems} />
 
+      {activeMissionForSelectedDate ? (
+        <ActiveMissionCard
+          etaLabel={activeMissionForSelectedDate.etaLabel}
+          etaSubLabel={activeMissionForSelectedDate.etaSubLabel}
+          etaTone={activeMissionForSelectedDate.etaTone}
+          statusLabel={activeMissionForSelectedDate.statusLabel}
+          statusTone={activeMissionForSelectedDate.statusTone}
+          title={activeMissionForSelectedDate.doerName}
+          subtitle={activeMissionForSelectedDate.doerSummary}
+          progress={activeMissionForSelectedDate.progress}
+          progressLabel={activeMissionForSelectedDate.progressLabel}
+          avatarInitials={activeMissionForSelectedDate.doerAvatarInitials}
+          onPress={handlePressActiveMission}
+          onPressChat={handlePressActiveChat}
+        />
+      ) : null}
+
       <CalendarPillsV2
         selectedDate={selectedDate}
         onChange={handleChangeCalendar}
@@ -185,26 +202,7 @@ export const HomeGiverSection: React.FC<HomeGiverSectionProps> = ({
       {!hasAnyMissionsForSelectedDate ? (
         <EmptyMissionPlaceholderCard onCreate={handleCreateMission} />
       ) : (
-        <View style={styles.dayContent}>
-          {activeMissionForSelectedDate ? (
-            <ActiveMissionCard
-              etaLabel={activeMissionForSelectedDate.etaLabel}
-              etaSubLabel={activeMissionForSelectedDate.etaSubLabel}
-              etaTone={activeMissionForSelectedDate.etaTone}
-              statusLabel={activeMissionForSelectedDate.statusLabel}
-              statusTone={activeMissionForSelectedDate.statusTone}
-              title={activeMissionForSelectedDate.doerName}
-              subtitle={activeMissionForSelectedDate.doerSummary}
-              progress={activeMissionForSelectedDate.progress}
-              progressLabel={activeMissionForSelectedDate.progressLabel}
-              avatarInitials={activeMissionForSelectedDate.doerAvatarInitials}
-              onPress={handlePressActiveMission}
-              onPressChat={handlePressActiveChat}
-            />
-          ) : null}
-
-          <TetrisGrid items={gridItems} />
-        </View>
+        <TetrisGrid items={gridItems} />
       )}
 
       {state.kind === 'returning' ? (
@@ -224,12 +222,9 @@ export const HomeGiverSection: React.FC<HomeGiverSectionProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    gap: theme.space.lg,
+    gap: theme.space.sm,
   },
   viewAllLabel: {
     color: theme.colors.primary,
-  },
-  dayContent: {
-    gap: theme.space.md,
   },
 });
