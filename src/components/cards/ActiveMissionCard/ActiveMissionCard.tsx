@@ -273,6 +273,7 @@ const styles = StyleSheet.create({
     paddingVertical: theme.space['2xl'],
     paddingHorizontal: theme.space['2xl'],
     overflow: 'hidden',
+    minHeight: theme.size.cardHeroMinHeight,
   },
   cardBackdrop: {
     ...StyleSheet.absoluteFillObject,
