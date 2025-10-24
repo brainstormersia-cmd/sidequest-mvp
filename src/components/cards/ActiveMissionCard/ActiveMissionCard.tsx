@@ -207,7 +207,7 @@ export const ActiveMissionCard: React.FC<ActiveMissionCardProps> = React.memo(
         style={[styles.wrapper, animatedCardStyle]}
       >
         <LinearGradient
-          colors={['rgba(14,17,23,0.96)', 'rgba(23,27,35,0.96)']}
+          colors={['rgba(14,17,23,0.98)', 'rgba(26,32,44,0.9)']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.card}
@@ -258,7 +258,7 @@ export const ActiveMissionCard: React.FC<ActiveMissionCardProps> = React.memo(
 
             <View style={styles.progressBlock}>
               <View style={styles.progressTrack} onLayout={handleTrackLayout}>
-                <Animated.View style={[styles.progressFill, progressStyle]}></Animated.View>
+                <Animated.View style={[styles.progressFill, progressStyle]} />
               </View>
               {progressLabel ? (
                 <Text variant="xs" weight="medium" style={styles.progressLabel} numberOfLines={1}>
@@ -279,12 +279,12 @@ const styles = StyleSheet.create({
   wrapper: {
     borderRadius: theme.radius.lg,
     overflow: 'hidden',
-    backgroundColor: 'rgba(10,12,18,0.32)',
+    backgroundColor: 'rgba(10,12,18,0.44)',
     ...theme.shadow.soft,
     shadowColor: theme.shadow.medium.shadowColor,
     shadowOffset: theme.shadow.medium.shadowOffset,
-    shadowOpacity: theme.shadow.medium.shadowOpacity,
-    shadowRadius: theme.shadow.medium.shadowRadius,
+    shadowOpacity: Math.max(theme.shadow.medium.shadowOpacity, 0.32),
+    shadowRadius: theme.shadow.medium.shadowRadius + 6,
   },
   card: {
     borderRadius: theme.radius.lg,
@@ -294,11 +294,11 @@ const styles = StyleSheet.create({
   },
   cardBackdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(8, 11, 17, 0.28)',
+    backgroundColor: 'rgba(10,13,19,0.36)',
   },
   cardSheen: {
     ...StyleSheet.absoluteFillObject,
-    opacity: 0.8,
+    opacity: 0.9,
   },
   cardContent: {
     gap: theme.space.lg,

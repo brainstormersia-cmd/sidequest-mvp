@@ -219,7 +219,7 @@ export const MissionSummaryScreen = () => {
 
   return (
     <LinearGradient
-      colors={['rgba(14,17,23,0.98)', 'rgba(23,30,41,0.88)']}
+      colors={['rgba(14,17,23,0.98)', 'rgba(30,36,50,0.86)']}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={styles.gradient}
@@ -242,7 +242,7 @@ export const MissionSummaryScreen = () => {
           onLayout={(event) => setTopBarHeight(event.nativeEvent.layout.height)}
         >
           <LinearGradient
-            colors={['rgba(14,17,23,0.94)', 'rgba(23,30,41,0.68)']}
+            colors={['rgba(14,17,23,0.94)', 'rgba(28,34,46,0.72)']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.topBarBackdrop}
@@ -287,14 +287,14 @@ export const MissionSummaryScreen = () => {
         >
           <AnimatedView style={[styles.glassCardWrapper, buildSectionStyle(cardDriver)]}>
             <LinearGradient
-              colors={['rgba(255,255,255,0.24)', 'rgba(255,255,255,0.06)']}
+              colors={['rgba(255,255,255,0.32)', 'rgba(255,255,255,0.08)']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.glassCardSurface}
             >
               <View style={styles.glassCardBackdrop} pointerEvents="none" />
               <LinearGradient
-                colors={['rgba(255,255,255,0.18)', 'rgba(255,255,255,0.02)']}
+                colors={['rgba(255,255,255,0.22)', 'rgba(255,255,255,0.04)']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={styles.glassCardSheen}
@@ -336,7 +336,7 @@ export const MissionSummaryScreen = () => {
                     style={styles.progressTrack}
                     onLayout={(event) => setTrackWidth(event.nativeEvent.layout.width)}
                   >
-                    <Animated.View style={[styles.progressFill, progressStyle]}></Animated.View>
+                    <Animated.View style={[styles.progressFill, progressStyle]} />
                   </View>
                   <Text variant="xs" weight="medium" style={styles.progressLabel} numberOfLines={1}>
                     {mission.progressLabel}
