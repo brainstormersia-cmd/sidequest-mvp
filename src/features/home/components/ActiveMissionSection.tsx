@@ -18,7 +18,6 @@ export const ActiveMissionSection: React.FC<ActiveMissionSectionProps> = React.m
     return (
       <View style={styles.container}>
         <ActiveMissionCard
-          role={mission.role}
           etaLabel={mission.etaLabel}
           etaSubLabel={mission.etaSubLabel}
           etaTone={mission.etaTone}

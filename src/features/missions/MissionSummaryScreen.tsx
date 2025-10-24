@@ -186,7 +186,11 @@ export const MissionSummaryScreen = () => {
 
   const statusColor = statusToneToColor(mission.statusTone);
   const etaColor = etaToneToColor(mission.etaTone);
-  const statusHeadline = useMemo(() => toTitleCase(mission.statusLabel), [mission.statusLabel]);
+  const trimmedStatus = useMemo(
+    () => mission.statusLabel.trim() || mission.statusLabel,
+    [mission.statusLabel],
+  );
+  const statusHeadline = useMemo(() => toTitleCase(trimmedStatus), [trimmedStatus]);
   const accessibilityLabel = useMemo(
     () =>
       `${statusHeadline}, arrivo previsto in ${etaFullLabel}, progresso ${mission.progressLabel}`,
@@ -211,7 +215,12 @@ export const MissionSummaryScreen = () => {
   };
 
   return (
-    <LinearGradient colors={['#0E1117FF', '#171B23F2']} style={styles.gradient}>
+    <LinearGradient
+      colors={['rgba(14,17,23,0.98)', 'rgba(23,30,41,0.88)']}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={styles.gradient}
+    >
       <StatusBar style="light" />
       <View style={styles.safe}>
         <AnimatedView
@@ -230,15 +239,15 @@ export const MissionSummaryScreen = () => {
           onLayout={(event) => setTopBarHeight(event.nativeEvent.layout.height)}
         >
           <LinearGradient
-            colors={['rgba(14,17,23,0.88)', 'rgba(23,27,35,0.6)']}
+            colors={['rgba(14,17,23,0.94)', 'rgba(23,30,41,0.68)']}
             start={{ x: 0, y: 0 }}
-            end={{ x: 0, y: 1 }}
+            end={{ x: 1, y: 1 }}
             style={styles.topBarBackdrop}
             pointerEvents="none"
           />
           <View style={styles.topBarContent}>
             <Text variant="sm" weight="medium" style={[styles.statusLabel, { color: statusColor }]} numberOfLines={1}>
-              🟢 {statusHeadline}
+              🟢 {trimmedStatus}
             </Text>
             <View style={styles.topBarMeta}>
               <Text variant="sm" weight="medium" style={[styles.etaLabel, { color: etaColor }]} numberOfLines={1}>
@@ -264,7 +273,9 @@ export const MissionSummaryScreen = () => {
           contentContainerStyle={[
             styles.scrollContent,
             {
-              paddingTop: (topBarHeight || insets.top + theme.space['5xl']) + theme.space.xl,
+              paddingTop:
+                (topBarHeight ? topBarHeight + theme.space.lg : insets.top + theme.space['6xl']) +
+                theme.space.md,
               paddingBottom: insets.bottom + theme.space['6xl'],
               paddingHorizontal: theme.space['2xl'],
             },
@@ -273,12 +284,19 @@ export const MissionSummaryScreen = () => {
         >
           <AnimatedView style={[styles.glassCardWrapper, buildSectionStyle(cardDriver)]}>
             <LinearGradient
-              colors={['rgba(255,255,255,0.14)', 'rgba(255,255,255,0.04)']}
+              colors={['rgba(255,255,255,0.24)', 'rgba(255,255,255,0.06)']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.glassCardSurface}
             >
               <View style={styles.glassCardBackdrop} pointerEvents="none" />
+              <LinearGradient
+                colors={['rgba(255,255,255,0.18)', 'rgba(255,255,255,0.02)']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.glassCardSheen}
+                pointerEvents="none"
+              />
               <View style={styles.glassCardContent}>
                 <View style={styles.profileRow}>
                   <View style={styles.profileAvatar}>
@@ -465,7 +483,7 @@ const styles = StyleSheet.create({
   glassCardWrapper: {
     borderRadius: theme.radius.xl,
     overflow: 'hidden',
-    ...theme.shadow.soft,
+    ...theme.shadow.medium,
   },
   glassCardSurface: {
     borderRadius: theme.radius.xl,
@@ -473,7 +491,10 @@ const styles = StyleSheet.create({
   },
   glassCardBackdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: 'rgba(14,17,23,0.42)',
+  },
+  glassCardSheen: {
+    ...StyleSheet.absoluteFillObject,
   },
   glassCardContent: {
     padding: theme.space['2xl'],

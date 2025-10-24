@@ -17,30 +17,6 @@ import { useReduceMotion } from './ActiveMissionCard.anim';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-const statusToneToColor = (tone: ActiveMissionCardProps['statusTone'] = 'success') => {
-  switch (tone) {
-    case 'warning':
-      return 'rgba(250, 204, 21, 0.8)';
-    case 'review':
-      return 'rgba(147, 51, 234, 0.8)';
-    case 'muted':
-      return 'rgba(255,255,255,0.6)';
-    default:
-      return 'rgba(34, 197, 94, 0.8)';
-  }
-};
-
-const etaToneToColor = (tone: ActiveMissionCardProps['etaTone'] = 'success') => {
-  switch (tone) {
-    case 'warning':
-      return 'rgba(250, 204, 21, 0.85)';
-    case 'review':
-      return 'rgba(147, 51, 234, 0.85)';
-    default:
-      return 'rgba(34, 197, 94, 0.85)';
-  }
-};
-
 const clampProgress = (value: number) => {
   if (Number.isNaN(value)) {
     return 0;
@@ -64,10 +40,8 @@ const ChatGlyph = () => (
 export const ActiveMissionCard: React.FC<ActiveMissionCardProps> = React.memo(
   ({
     statusLabel,
-    statusTone,
     etaLabel,
     etaSubLabel,
-    etaTone,
     title,
     subtitle,
     progress,
@@ -82,15 +56,6 @@ export const ActiveMissionCard: React.FC<ActiveMissionCardProps> = React.memo(
     const progressDriver = useRef(new Animated.Value(0)).current;
     const [trackWidth, setTrackWidth] = useState(0);
     const longPressTriggered = useRef(false);
-
-    const statusColor = useMemo(() => statusToneToColor(statusTone), [statusTone]);
-    const timerColor = useMemo(() => etaToneToColor(etaTone), [etaTone]);
-    const timerLabel = useMemo(() => {
-      if (!etaSubLabel) {
-        return etaLabel;
-      }
-      return `${etaLabel} ${etaSubLabel}`;
-    }, [etaLabel, etaSubLabel]);
 
     const handleTrackLayout = useCallback((event: LayoutChangeEvent) => {
       setTrackWidth(event.nativeEvent.layout.width);
@@ -125,7 +90,7 @@ export const ActiveMissionCard: React.FC<ActiveMissionCardProps> = React.memo(
         easing: Easing.out(Easing.cubic),
         useNativeDriver: true,
       }).start();
-    }, [contentDriver, etaLabel, etaSubLabel, progressLabel, reduceMotion, statusLabel, subtitle, title]);
+    }, [contentDriver, progressLabel, reduceMotion, statusLabel, subtitle, title]);
 
     const animateScale = useCallback(
       (toValue: number) => {
@@ -192,11 +157,41 @@ export const ActiveMissionCard: React.FC<ActiveMissionCardProps> = React.memo(
       } as const;
     }, [progressDriver, trackWidth]);
 
-    const statusHeadlineLabel = useMemo(() => toTitleCase(statusLabel), [statusLabel]);
+    const timerLabel = useMemo(() => {
+      if (!etaLabel) {
+        return '';
+      }
+      if (!etaSubLabel) {
+        return etaLabel;
+      }
+      return `${etaLabel} ${etaSubLabel}`;
+    }, [etaLabel, etaSubLabel]);
+
+    const trimmedStatusLabel = useMemo(() => statusLabel.trim() || statusLabel, [statusLabel]);
+    const statusHeadlineLabel = useMemo(() => toTitleCase(trimmedStatusLabel), [trimmedStatusLabel]);
+    const cardAccessibilityLabel = useMemo(() => {
+      const segments: string[] = [];
+      if (statusHeadlineLabel) {
+        segments.push(statusHeadlineLabel);
+      }
+      if (title) {
+        segments.push(`Doer ${title}`);
+      }
+      if (subtitle) {
+        segments.push(subtitle);
+      }
+      if (progressLabel) {
+        segments.push(`Progresso ${progressLabel}`);
+      }
+      if (timerLabel) {
+        segments.push(`Arrivo previsto ${timerLabel}`);
+      }
+      return segments.join(', ');
+    }, [progressLabel, statusHeadlineLabel, subtitle, timerLabel, title]);
 
     return (
       <AnimatedPressable
-        {...a11yButtonProps(`Missione attiva con ${title}`)}
+        {...a11yButtonProps(cardAccessibilityLabel || `Missione attiva con ${title}`)}
         onPress={handlePress}
         onLongPress={handleLongPress}
         onPressIn={handlePressIn}
@@ -206,69 +201,49 @@ export const ActiveMissionCard: React.FC<ActiveMissionCardProps> = React.memo(
         style={[styles.wrapper, animatedCardStyle]}
       >
         <LinearGradient
-          colors={['#0E1117F5', '#171B23F5']}
+          colors={['rgba(14,17,23,0.98)', 'rgba(23,30,41,0.86)']}
           start={{ x: 0, y: 0 }}
-          end={{ x: 0, y: 1 }}
+          end={{ x: 1, y: 1 }}
           style={styles.card}
         >
+          <View style={styles.cardBackdrop} pointerEvents="none" />
+          <LinearGradient
+            colors={['rgba(255,255,255,0.18)', 'rgba(255,255,255,0.04)']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.cardSheen}
+            pointerEvents="none"
+          />
           <Animated.View style={[styles.cardContent, { opacity: contentDriver }]}>
-            <View style={styles.headerRow}>
-              <Text
-                variant="sm"
-                weight="medium"
-                style={[styles.statusTag, { color: statusColor }]}
-                numberOfLines={1}
-              >
-                🟢 {statusLabel}
-              </Text>
-              <View style={styles.headerMeta}>
-                <Text
-                  variant="sm"
-                  weight="medium"
-                  style={[styles.timerLabel, { color: timerColor }]}
-                  numberOfLines={1}
-                >
-                  ⏱ {timerLabel}
-                </Text>
-                {onPressChat ? (
-                  <Pressable
-                    {...a11yButtonProps('Apri chat missione')}
-                    hitSlop={HITSLOP_44}
-                    onPress={handlePressChat}
-                    style={({ pressed }) => [styles.chatTouch, pressed ? styles.chatTouchPressed : null]}
-                  >
-                    <ChatGlyph />
-                  </Pressable>
-                ) : null}
-              </View>
-            </View>
-
-            <View style={styles.identityBlock}>
-              <Text variant="lg" weight="medium" style={styles.statusHeadline} numberOfLines={1}>
+            <View style={styles.headlineRow}>
+              <Text variant="lg" weight="bold" style={styles.statusHeadline} numberOfLines={1}>
                 {statusHeadlineLabel}
               </Text>
-              <View style={styles.identityRow}>
-                {avatarInitials ? (
-                  <View style={styles.avatar}>
-                    <Text variant="sm" weight="bold" style={styles.avatarText}>
-                      {avatarInitials}
-                    </Text>
-                  </View>
-                ) : null}
-                <View style={styles.identityText}>
-                  <Text variant="md" weight="bold" style={styles.doerName} numberOfLines={1}>
-                    {title}
-                  </Text>
-                  <Text variant="sm" style={styles.doerSummary} numberOfLines={1}>
-                    {subtitle}
+              {onPressChat ? (
+                <Pressable
+                  {...a11yButtonProps('Apri chat missione')}
+                  hitSlop={HITSLOP_44}
+                  onPress={handlePressChat}
+                  style={({ pressed }) => [styles.chatTouch, pressed ? styles.chatTouchPressed : null]}
+                >
+                  <ChatGlyph />
+                </Pressable>
+              ) : null}
+            </View>
+
+            <View style={styles.identityRow}>
+              {avatarInitials ? (
+                <View style={styles.avatar}>
+                  <Text variant="sm" weight="bold" style={styles.avatarText}>
+                    {avatarInitials}
                   </Text>
                 </View>
               ) : null}
               <View style={styles.identityText}>
-                <Text variant="lg" weight="bold" style={styles.doerName} numberOfLines={1}>
+                <Text variant="md" weight="bold" style={styles.doerName} numberOfLines={1}>
                   {title}
                 </Text>
-                <Text variant="sm" style={styles.doerSummary} numberOfLines={2}>
+                <Text variant="sm" style={styles.doerSummary} numberOfLines={1}>
                   {subtitle}
                 </Text>
               </View>
@@ -298,35 +273,29 @@ const styles = StyleSheet.create({
   wrapper: {
     borderRadius: theme.radius.lg,
     overflow: 'hidden',
-    ...theme.shadow.soft,
+    ...theme.shadow.medium,
   },
   card: {
     borderRadius: theme.radius.lg,
     paddingVertical: theme.space['2xl'],
     paddingHorizontal: theme.space['2xl'],
+    overflow: 'hidden',
+  },
+  cardBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(10, 12, 18, 0.25)',
+  },
+  cardSheen: {
+    ...StyleSheet.absoluteFillObject,
   },
   cardContent: {
-    gap: theme.space.xl,
+    gap: theme.space.lg,
   },
-  headerRow: {
+  headlineRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-  },
-  statusTag: {
-    letterSpacing: 0.2,
-    flexShrink: 1,
-  },
-  identityBlock: {
-    gap: theme.space.md,
-  },
-  headerMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
     gap: theme.space.sm,
-  },
-  timerLabel: {
-    color: 'rgba(255,255,255,0.85)',
   },
   chatTouch: {
     borderRadius: theme.radius.full,
@@ -415,7 +384,6 @@ const styles = StyleSheet.create({
   progressLabel: {
     color: 'rgba(255,255,255,0.68)',
     textAlign: 'right',
-    minWidth: 84,
     flexShrink: 0,
   },
 });

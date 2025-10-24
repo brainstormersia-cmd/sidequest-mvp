@@ -1,14 +1,14 @@
 # Struttura attuale Home Giver
 
 ## Card missione attiva (`ActiveMissionCard`)
-- **Header singola riga** con "🟢 {status}" a sinistra, timer "⏱" e pulsante chat a destra.
-- **Headline** principale "{status}" in bianco 96%.
-- **Identità Doer**: avatar circolare, nome in grassetto, descrizione breve.
-- **Barra di avanzamento**: traccia #222832, fill blu primario, label percentuale allineata a destra.
+- **Shell vetrosa** con gradiente `rgba(14,17,23,0.98) → rgba(23,30,41,0.86)`, backdrop scuro 0.25 e sheen diagonale.
+- **Headline principale** "Sta Arrivando" (title case) bianco 96% con icona chat inline sulla stessa riga.
+- **Identità Doer**: avatar circolare, nome in grassetto, descrizione grigio 70%.
+- **Barra di avanzamento**: traccia #222832, fill blu primario animato, label percentuale sulla stessa riga allineata a destra.
 
 ## Riepilogo missione (`MissionSummaryScreen`)
-- **Top bar sticky** traslucida con stato, timer e chiusura.
-- **Card vetrosa** con gradiente tenue e contenuto compatto: profilo Doer, titolo • compenso, itinerario, note.
+- **Top bar sticky** traslucida con gradiente `rgba(14,17,23,0.94) → rgba(23,30,41,0.68)` e stato/timer/chiudi.
+- **Card vetrosa** con gradiente `rgba(255,255,255,0.24) → rgba(255,255,255,0.06)`, backdrop scuro 0.42 e shadow medium.
 - **Progress bar** prima della roadmap.
 - **Roadmap verticale** con nodi pieni/anello/vuoti in funzione dello stato.
 - **Action bar sticky** inferiore con CTA pill "Apri chat" e "Annulla".
