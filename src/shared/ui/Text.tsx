@@ -1,13 +1,15 @@
 import React, { useMemo } from 'react';
-import { Text as RNText, TextProps as RNTextProps } from 'react-native';
-import { Tokens, useTokens } from '../lib/theme';
+import { Text as RNText, TextProps as RNTextProps, StyleSheet } from 'react-native';
+import { theme } from '../lib/theme';
 
-type TextVariant = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+type TextVariant = 'xs' | 'sm' | 'md' | 'lg';
+type TextWeight = 'regular' | 'medium' | 'semibold' | 'bold';
+type TextTone = 'primary' | 'secondary' | 'muted' | 'inverted';
 
 type Props = RNTextProps & {
   variant?: TextVariant;
-  weight?: 'regular' | 'medium' | 'semibold' | 'bold';
-  tone?: 'primary' | 'secondary' | 'muted' | 'inverted';
+  weight?: TextWeight;
+  tone?: TextTone;
 };
 
 export const Text = ({
@@ -18,36 +20,15 @@ export const Text = ({
   style,
   ...rest
 }: Props) => {
-  const tokens = useTokens();
-  const resolvedWeight = weight === 'medium' ? 'semibold' : weight;
-
-  const textStyle = useMemo(() => {
-    const fontSize = tokens.font.size[variant];
-    const weightValue = tokens.font.weight[resolvedWeight] ?? tokens.font.weight.regular;
-    const toneColor =
-      tone === 'secondary'
-        ? tokens.color.text.secondary
-        : tone === 'muted'
-        ? tokens.color.text.muted
-        : tone === 'inverted'
-        ? tokens.color.text.inverted
-        : tokens.color.text.primary;
-
-    const lineHeightMultiplier = variant === 'lg' || variant === 'xl' ? tokens.font.lineHeight.relaxed : tokens.font.lineHeight.tight;
-
-    return {
-      color: toneColor,
-      fontSize,
-      fontWeight: weightValue,
-      lineHeight: Math.round(fontSize * lineHeightMultiplier),
-    };
-  }, [tokens, resolvedWeight, tone, variant]);
+  const toneStyle = useMemo(() => getToneStyle(tone), [tone]);
+  const weightKey = weight === 'semibold' ? 'medium' : weight;
 
   return (
     <RNText
       accessibilityRole={rest.accessibilityRole}
-      maxFontSizeMultiplier={1.1}
-      style={[baseStyles(tokens), textStyle, style]}
+      allowFontScaling={false}
+      maxFontSizeMultiplier={1.0}
+      style={[styles.base, styles[variant], styles[weightKey], toneStyle, style]}
       {...rest}
     >
       {children}
@@ -55,18 +36,57 @@ export const Text = ({
   );
 };
 
-const baseStyles = (() => {
-  let cachedTokens: Tokens | null = null;
-  let cached: { textAlignVertical: 'center'; includeFontPadding: false } | null = null;
-  return (tokens: Tokens) => {
-    if (cached && cachedTokens === tokens) {
-      return cached;
-    }
-    cachedTokens = tokens;
-    cached = {
-      textAlignVertical: 'center',
-      includeFontPadding: false,
-    } as const;
-    return cached;
-  };
-})();
+const getToneStyle = (tone: TextTone) => {
+  switch (tone) {
+    case 'secondary':
+      return styles.toneSecondary;
+    case 'muted':
+      return styles.toneMuted;
+    case 'inverted':
+      return styles.toneInverted;
+    case 'primary':
+    default:
+      return styles.tonePrimary;
+  }
+};
+
+const styles = StyleSheet.create({
+  base: {
+    color: theme.colors.textPrimary,
+    textAlignVertical: 'center',
+    includeFontPadding: false,
+  },
+  xs: {
+    fontSize: theme.typography.xs,
+  },
+  sm: {
+    fontSize: theme.typography.sm,
+  },
+  md: {
+    fontSize: theme.typography.md,
+  },
+  lg: {
+    fontSize: theme.typography.lg,
+  },
+  regular: {
+    fontWeight: theme.fontWeight.regular,
+  },
+  medium: {
+    fontWeight: theme.fontWeight.medium,
+  },
+  bold: {
+    fontWeight: theme.fontWeight.bold,
+  },
+  tonePrimary: {
+    color: theme.colors.textPrimary,
+  },
+  toneSecondary: {
+    color: theme.colors.textSecondary,
+  },
+  toneMuted: {
+    color: theme.colors.textSubtle,
+  },
+  toneInverted: {
+    color: theme.colors.onPrimary,
+  },
+});

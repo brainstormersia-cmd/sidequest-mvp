@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Pressable } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { Text } from '../../../../shared/ui/Text';
-import { useTokens } from '../../../../shared/lib/theme';
+import { useWizardTokens } from '../tokens';
 import { useWizard } from '../context';
 import { StepHeader } from '../components/StepHeader';
 import { FieldText, Toggle } from '../components/Fields';
@@ -13,7 +13,7 @@ type Props = {
 };
 
 export const Step2Location = ({ onRemoteChanged }: Props) => {
-  const tokens = useTokens();
+  const tokens = useWizardTokens();
   const { state, setLocation, setDraft, errors } = useWizard();
   const isRemote = state.location.mode === 'remote';
 

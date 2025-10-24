@@ -56,7 +56,7 @@ sidequest-mvp/
 | Feature flag (offline, ecc.) | `src/config/features.ts` |
 | Permessi / integrazioni native | `app.config.ts` |
 | API missioni/applicazioni | `src/features/missions/api/*.ts` |
-| Wizard creazione missione | `src/features/create/` |
+| Wizard creazione missione | `src/features/create-mission/` |
 | Layout sheet/overlay | `src/shared/ui/Sheet.tsx` e `src/routes/ModalSheetProvider.tsx` |
 
 ## SCRIPT

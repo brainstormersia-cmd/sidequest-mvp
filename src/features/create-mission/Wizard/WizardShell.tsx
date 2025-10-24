@@ -4,7 +4,7 @@ import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text } from '../../../shared/ui/Text';
-import { useTokens } from '../../../shared/lib/theme';
+import { useWizardTokens } from './tokens';
 import { ProgressRing } from './components/ProgressRing';
 import { SummaryField, SummaryPeek } from './components/SummaryPeek';
 
@@ -41,7 +41,7 @@ export const WizardShell = ({
   onEditSummary,
   secondaryAction,
 }: Props) => {
-  const tokens = useTokens();
+  const tokens = useWizardTokens();
   const insets = useSafeAreaInsets();
   const computedProgress = progress ?? step / Math.max(total, 1);
 

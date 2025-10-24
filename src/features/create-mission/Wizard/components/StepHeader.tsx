@@ -1,7 +1,7 @@
 import React from 'react';
 import { View } from 'react-native';
 import { Text } from '../../../../shared/ui/Text';
-import { useTokens } from '../../../../shared/lib/theme';
+import { useWizardTokens } from '../tokens';
 
 type Props = {
   title: string;
@@ -10,7 +10,7 @@ type Props = {
 };
 
 export const StepHeader = ({ title, subtitle, hint }: Props) => {
-  const tokens = useTokens();
+  const tokens = useWizardTokens();
   return (
     <View style={{ gap: tokens.space.xxxs }}>
       <Text variant="lg" weight="bold">

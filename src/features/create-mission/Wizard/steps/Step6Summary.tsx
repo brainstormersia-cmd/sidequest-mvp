@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Pressable, ActivityIndicator } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { Text } from '../../../../shared/ui/Text';
-import { useTokens } from '../../../../shared/lib/theme';
+import { useWizardTokens } from '../tokens';
 import { useWizard } from '../context';
 import { StepHeader } from '../components/StepHeader';
 import { SummaryField } from '../components/SummaryPeek';
@@ -14,7 +14,7 @@ type Props = {
 };
 
 export const Step6Summary = ({ onEditField }: Props) => {
-  const tokens = useTokens();
+  const tokens = useWizardTokens();
   const { state, setDraft } = useWizard();
   const [loadingRefine, setLoadingRefine] = React.useState(false);
   const [refineError, setRefineError] = React.useState<string | null>(null);

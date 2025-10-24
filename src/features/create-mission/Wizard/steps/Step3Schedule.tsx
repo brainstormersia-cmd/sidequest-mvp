@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Pressable } from 'react-native';
 import { Text } from '../../../../shared/ui/Text';
-import { useTokens } from '../../../../shared/lib/theme';
+import { useWizardTokens } from '../tokens';
 import { useWizard } from '../context';
 import { StepHeader } from '../components/StepHeader';
 import { FieldText } from '../components/Fields';
@@ -14,7 +14,7 @@ const QUICK_OPTIONS = [
 ];
 
 export const Step3Schedule = () => {
-  const tokens = useTokens();
+  const tokens = useWizardTokens();
   const { state, setDraft } = useWizard();
 
   const selectOption = (option: (typeof QUICK_OPTIONS)[number]['value']) => {

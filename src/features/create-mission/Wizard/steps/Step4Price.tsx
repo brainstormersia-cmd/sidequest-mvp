@@ -1,13 +1,13 @@
 import React from 'react';
 import { View } from 'react-native';
 import { Text } from '../../../../shared/ui/Text';
-import { useTokens } from '../../../../shared/lib/theme';
+import { useWizardTokens } from '../tokens';
 import { useWizard } from '../context';
 import { StepHeader } from '../components/StepHeader';
 import { FieldText, PriceSlider, Segmented } from '../components/Fields';
 
 export const Step4Price = () => {
-  const tokens = useTokens();
+  const tokens = useWizardTokens();
   const { state, setField, setDraft } = useWizard();
   const range = state.priceRangeHint;
   const fair = state.price >= range.min && state.price <= range.max;

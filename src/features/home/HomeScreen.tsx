@@ -17,7 +17,7 @@ import { Text } from '../../shared/ui/Text';
 import { Spacer } from '../../shared/ui/Spacer';
 import { theme } from '../../shared/lib/theme';
 import { useModalSheet } from '../../routes/ModalSheetProvider';
-import { CreateMissionSheet } from '../create/CreateMissionSheet';
+import { CreateMissionSheet } from '../create-mission/CreateMissionSheet';
 import { useRole } from '../../shared/state/roleStore';
 import { HomeDoerSection } from './HomeDoerSection';
 import { HomeGiverSection } from './HomeGiverSection';
@@ -26,6 +26,7 @@ import { a11yButtonProps, HITSLOP_44 } from '../../shared/lib/a11y';
 import { ActiveMissionModel, useGiverHomeState } from './useGiverHomeState';
 import { useReduceMotion } from '../../components/cards/ActiveMissionCard/ActiveMissionCard.anim';
 import * as Haptics from 'expo-haptics';
+import { features } from '../../config/features';
 
 export const HomeScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -58,6 +59,10 @@ export const HomeScreen = () => {
   };
 
   const openCreateMissionSheet = React.useCallback(() => {
+    if (!features.wizard) {
+      Alert.alert('Missione', 'La creazione missione non è disponibile.');
+      return;
+    }
     openSheet(CreateMissionSheet, undefined, {
       title: 'Nuova missione',
       accessibilityLabel: 'Nuova missione',

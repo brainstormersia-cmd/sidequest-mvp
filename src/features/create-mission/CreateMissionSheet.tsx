@@ -12,12 +12,12 @@ import { Step6Summary } from './Wizard/steps/Step6Summary';
 import { SummaryField } from './Wizard/components/SummaryPeek';
 import { MissionDraft } from './Wizard/types';
 import { formatWhen } from './Wizard/utils/format';
+import { WizardTokensProvider, useWizardTokens } from './Wizard/tokens';
 import { submitMission } from './api/create.api';
 import { getOrCreateDeviceId } from '../../shared/lib/device';
 import { hasSupabase } from '../../shared/lib/supabase';
 import { MissionInput } from '../missions/model/mission.types';
 import { Text } from '../../shared/ui/Text';
-import { useTokens } from '../../shared/lib/theme';
 
 type Props = {
   closeSheet?: () => void;
@@ -244,7 +244,7 @@ const CreateMissionWizard = ({ closeSheet }: Props) => {
 };
 
 const TextBanner = ({ message, tone }: { message: string; tone: 'success' | 'danger' }) => {
-  const tokens = useTokens();
+  const tokens = useWizardTokens();
   const background = tone === 'success' ? tokens.color.state.good : tokens.color.state.danger;
   return (
     <View
@@ -293,7 +293,9 @@ const mapDraftToMissionInput = (draft: MissionDraft): MissionInput => {
 };
 
 export const CreateMissionSheet = (props: Props) => (
-  <WizardProvider>
-    <CreateMissionWizard {...props} />
-  </WizardProvider>
+  <WizardTokensProvider>
+    <WizardProvider>
+      <CreateMissionWizard {...props} />
+    </WizardProvider>
+  </WizardTokensProvider>
 );

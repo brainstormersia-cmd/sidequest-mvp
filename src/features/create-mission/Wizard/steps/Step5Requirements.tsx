@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Pressable } from 'react-native';
 import { Text } from '../../../../shared/ui/Text';
-import { useTokens } from '../../../../shared/lib/theme';
+import { useWizardTokens } from '../tokens';
 import { useWizard } from '../context';
 import { StepHeader } from '../components/StepHeader';
 import { FieldTextArea, TagChips } from '../components/Fields';
@@ -9,7 +9,7 @@ import { FieldTextArea, TagChips } from '../components/Fields';
 const SKILL_TAGS = ['Guida', 'Automunito', 'Scale', 'Manualità', 'Informatica', 'Lingue'];
 
 export const Step5Requirements = () => {
-  const tokens = useTokens();
+  const tokens = useWizardTokens();
   const { state, setDraft } = useWizard();
 
   const toggleSkill = (value: string) => {

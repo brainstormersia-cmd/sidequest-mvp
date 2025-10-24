@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Pressable } from 'react-native';
 import { Text } from '../../../../shared/ui/Text';
-import { useTokens } from '../../../../shared/lib/theme';
+import { useWizardTokens } from '../tokens';
 import { useWizard } from '../context';
 import { StepHeader } from '../components/StepHeader';
 import { FieldText, FieldTextArea, TagChips, QualityMeter } from '../components/Fields';
@@ -16,7 +16,7 @@ type Props = {
 };
 
 export const Step1Details = ({ onQuickMission, onTemplateSelected }: Props) => {
-  const tokens = useTokens();
+  const tokens = useWizardTokens();
   const { state, setDraft, setField, errors } = useWizard();
 
   const toggleTag = (value: string) => {

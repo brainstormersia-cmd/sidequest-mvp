@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { useTokens } from '../../../../shared/lib/theme';
+import { useWizardTokens, WizardTokens } from '../tokens';
 
 type Props = {
   progress: number;
@@ -8,7 +8,7 @@ type Props = {
 };
 
 export const ProgressRing = ({ progress, children }: Props) => {
-  const tokens = useTokens();
+  const tokens = useWizardTokens();
   const styles = React.useMemo(() => createStyles(tokens), [tokens]);
   const clamped = Math.max(0, Math.min(progress, 1));
   const angle = clamped * 360;
@@ -31,7 +31,7 @@ export const ProgressRing = ({ progress, children }: Props) => {
   );
 };
 
-const createStyles = (tokens: ReturnType<typeof useTokens>) =>
+const createStyles = (tokens: WizardTokens) =>
   StyleSheet.create({
     container: {
       width: 60,

@@ -1,7 +1,7 @@
 import React from 'react';
 import { TextInput, View, TextInputProps, Pressable, GestureResponderEvent, PanResponder, PanResponderInstance } from 'react-native';
 import { Text } from '../../../../shared/ui/Text';
-import { useTokens } from '../../../../shared/lib/theme';
+import { useWizardTokens } from '../tokens';
 import { MissionQualityLevel } from '../types';
 
 export type FieldTextProps = TextInputProps & {
@@ -11,7 +11,7 @@ export type FieldTextProps = TextInputProps & {
 };
 
 export const FieldText = ({ label, assistiveText, error, style, ...rest }: FieldTextProps) => {
-  const tokens = useTokens();
+  const tokens = useWizardTokens();
   const borderColor = error ? tokens.color.state.danger : tokens.color.border.default;
   return (
     <View style={{ gap: tokens.space.xxxs }}>
@@ -57,7 +57,7 @@ export const FieldText = ({ label, assistiveText, error, style, ...rest }: Field
 type FieldTextAreaProps = FieldTextProps & { maxCharacters?: number };
 
 export const FieldTextArea = ({ maxCharacters, value, onChangeText, ...props }: FieldTextAreaProps) => {
-  const tokens = useTokens();
+  const tokens = useWizardTokens();
   const remaining = typeof value === 'string' && maxCharacters ? Math.max(0, maxCharacters - value.length) : undefined;
 
   return (
@@ -95,7 +95,7 @@ type TagChipsProps = {
 };
 
 export const TagChips = ({ options, selected, onToggle, label }: TagChipsProps) => {
-  const tokens = useTokens();
+  const tokens = useWizardTokens();
   return (
     <View style={{ gap: tokens.space.xxs }}>
       {label ? (
@@ -143,7 +143,7 @@ type SegmentedProps = {
 };
 
 export const Segmented = ({ options, value, onChange }: SegmentedProps) => {
-  const tokens = useTokens();
+  const tokens = useWizardTokens();
   return (
     <View
       style={{
@@ -190,7 +190,7 @@ type ToggleProps = {
 };
 
 export const Toggle = ({ value, onValueChange, label, hint }: ToggleProps) => {
-  const tokens = useTokens();
+  const tokens = useWizardTokens();
   return (
     <Pressable
       onPress={() => onValueChange(!value)}
@@ -241,7 +241,7 @@ export const Toggle = ({ value, onValueChange, label, hint }: ToggleProps) => {
 };
 
 export const QualityMeter = ({ level }: { level: MissionQualityLevel }) => {
-  const tokens = useTokens();
+  const tokens = useWizardTokens();
   const levels: MissionQualityLevel[] = ['Completa', 'Ottimizzata', 'Eccellente'];
   return (
     <View style={{ gap: tokens.space.xxxs }}>
@@ -281,7 +281,7 @@ export type SliderProps = {
 };
 
 export const PriceSlider = ({ value, min, max, onChange }: SliderProps) => {
-  const tokens = useTokens();
+  const tokens = useWizardTokens();
   const [panResponder] = React.useState<PanResponderInstance>(() =>
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,

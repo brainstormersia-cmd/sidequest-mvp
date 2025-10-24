@@ -1,7 +1,7 @@
 import React from 'react';
 import { View } from 'react-native';
 import { Text } from '../../../../shared/ui/Text';
-import { useTokens } from '../../../../shared/lib/theme';
+import { useWizardTokens } from '../tokens';
 
 type Props = {
   address: string;
@@ -9,7 +9,7 @@ type Props = {
 };
 
 export const MapPreview = ({ address, remote }: Props) => {
-  const tokens = useTokens();
+  const tokens = useWizardTokens();
   return (
     <View
       style={{
