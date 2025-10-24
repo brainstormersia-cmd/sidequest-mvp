@@ -1,6 +1,5 @@
 import React from 'react';
 import { ActivityIndicator, Alert, View } from 'react-native';
-import * as Haptics from 'expo-haptics';
 import { WizardProvider, useWizard } from './Wizard/context';
 import { WizardShell } from './Wizard/WizardShell';
 import { Step1Details } from './Wizard/steps/Step1Details';
@@ -18,6 +17,7 @@ import { getOrCreateDeviceId } from '../../shared/lib/device';
 import { hasSupabase } from '../../shared/lib/supabase';
 import { MissionInput } from '../missions/model/mission.types';
 import { Text } from '../../shared/ui/Text';
+import { triggerSuccessHaptic } from '../../shared/lib/haptics';
 
 type Props = {
   closeSheet?: () => void;
@@ -169,7 +169,7 @@ const CreateMissionWizard = ({ closeSheet }: Props) => {
       const deviceId = await getOrCreateDeviceId();
       const payload = mapDraftToMissionInput(state);
       await submitMission(payload, deviceId);
-      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      await triggerSuccessHaptic();
       setToast('Missione pubblicata · visibile ai Doer nelle vicinanze');
       await reset();
       setStepIndex(0);

@@ -6,7 +6,20 @@ export const triggerSelectionHaptic = async () => {
     return;
   }
   try {
-    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    await Haptics.selectionAsync();
+  } catch (error) {
+    console.warn('Impossibile riprodurre l\'haptic feedback', error);
+  }
+};
+
+export const triggerImpactHaptic = async (
+  style: Haptics.ImpactFeedbackStyle = Haptics.ImpactFeedbackStyle.Medium,
+) => {
+  if (!features.enableHaptics) {
+    return;
+  }
+  try {
+    await Haptics.impactAsync(style);
   } catch (error) {
     console.warn('Impossibile riprodurre l\'haptic feedback', error);
   }

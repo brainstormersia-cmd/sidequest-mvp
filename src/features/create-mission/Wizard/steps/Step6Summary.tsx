@@ -1,6 +1,5 @@
 import React from 'react';
 import { View, Pressable, ActivityIndicator } from 'react-native';
-import * as Haptics from 'expo-haptics';
 import { Text } from '../../../../shared/ui/Text';
 import { useWizardTokens } from '../tokens';
 import { useWizard } from '../context';
@@ -8,6 +7,7 @@ import { StepHeader } from '../components/StepHeader';
 import { SummaryField } from '../components/SummaryPeek';
 import { formatPrice, formatWhen, formatWhere } from '../utils/format';
 import { refineMission } from '../deepseek';
+import { triggerSelectionHaptic } from '../../../../shared/lib/haptics';
 
 type Props = {
   onEditField: (field: SummaryField) => void;
@@ -37,7 +37,7 @@ export const Step6Summary = ({ onEditField }: Props) => {
         category: result.category ?? prev.category,
         priceRangeHint: result.suggestedRange ?? prev.priceRangeHint,
       }));
-      await Haptics.selectionAsync();
+      await triggerSelectionHaptic();
     } catch (error) {
       setRefineError('Impossibile rifinire ora. Riprova più tardi.');
     } finally {

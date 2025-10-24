@@ -1,12 +1,12 @@
 import React from 'react';
 import { View, Pressable } from 'react-native';
-import * as Haptics from 'expo-haptics';
 import { Text } from '../../../../shared/ui/Text';
 import { useWizardTokens } from '../tokens';
 import { useWizard } from '../context';
 import { StepHeader } from '../components/StepHeader';
 import { FieldText, Toggle } from '../components/Fields';
 import { MapPreview } from '../components/MapPreview';
+import { triggerSelectionHaptic } from '../../../../shared/lib/haptics';
 
 type Props = {
   onRemoteChanged?: (remote: boolean) => void;
@@ -17,8 +17,8 @@ export const Step2Location = ({ onRemoteChanged }: Props) => {
   const { state, setLocation, setDraft, errors } = useWizard();
   const isRemote = state.location.mode === 'remote';
 
-  const handleUseCurrentLocation = async () => {
-    await Haptics.selectionAsync();
+  const handleUseCurrentLocation = () => {
+    void triggerSelectionHaptic();
     setLocation('La mia posizione attuale');
   };
 

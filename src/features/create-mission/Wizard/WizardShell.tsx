@@ -1,12 +1,12 @@
 import React from 'react';
 import { View, ScrollView, Pressable, ActivityIndicator } from 'react-native';
-import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text } from '../../../shared/ui/Text';
 import { useWizardTokens } from './tokens';
 import { ProgressRing } from './components/ProgressRing';
 import { SummaryField, SummaryPeek } from './components/SummaryPeek';
+import { triggerSelectionHaptic } from '../../../shared/lib/haptics';
 
 type Props = {
   step: number;
@@ -45,8 +45,8 @@ export const WizardShell = ({
   const insets = useSafeAreaInsets();
   const computedProgress = progress ?? step / Math.max(total, 1);
 
-  const handleNext = async () => {
-    await Haptics.selectionAsync();
+  const handleNext = () => {
+    void triggerSelectionHaptic();
     onNext?.();
   };
 
