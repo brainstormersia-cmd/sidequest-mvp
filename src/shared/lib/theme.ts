@@ -94,6 +94,12 @@ const baseShadow = {
   },
 };
 
+const baseElevation = {
+  level0: 4,
+  level1: 8,
+  level2: 16,
+};
+
 const baseTouch = {
   targetMin: 48,
   hitSlop: 12,
@@ -159,6 +165,7 @@ function createSemanticTokens(mode: 'light' | 'dark') {
     space: baseSpace,
     radius: baseRadius,
     shadow: baseShadow,
+    elevation: baseElevation,
     motion: baseMotion,
     opacity: baseOpacity,
     blur: baseBlur,
@@ -224,6 +231,7 @@ const mapTokensToTheme = (tokens: Tokens) => ({
   opacity: { ...tokens.opacity, pressed: 0.92 },
   touch: { ...tokens.touch, targetMin: tokens.size.touch.min },
   shadow: tokens.shadow,
+  elevation: tokens.elevation,
   size: tokens.size,
 });
 
