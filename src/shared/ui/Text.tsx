@@ -1,21 +1,53 @@
-import React from 'react';
-import { Text as RNText, TextProps as RNTextProps, StyleSheet } from 'react-native';
-import { theme } from '../lib/theme';
+import React, { useMemo } from 'react';
+import { Text as RNText, TextProps as RNTextProps } from 'react-native';
+import { Tokens, useTokens } from '../lib/theme';
 
-type TextVariant = 'xs' | 'sm' | 'md' | 'lg';
+type TextVariant = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
 type Props = RNTextProps & {
   variant?: TextVariant;
-  weight?: 'regular' | 'medium' | 'bold';
+  weight?: 'regular' | 'medium' | 'semibold' | 'bold';
+  tone?: 'primary' | 'secondary' | 'muted' | 'inverted';
 };
 
-export const Text = ({ children, variant = 'sm', weight = 'regular', style, ...rest }: Props) => {
+export const Text = ({
+  children,
+  variant = 'sm',
+  weight = 'regular',
+  tone = 'primary',
+  style,
+  ...rest
+}: Props) => {
+  const tokens = useTokens();
+  const resolvedWeight = weight === 'medium' ? 'semibold' : weight;
+
+  const textStyle = useMemo(() => {
+    const fontSize = tokens.font.size[variant];
+    const weightValue = tokens.font.weight[resolvedWeight] ?? tokens.font.weight.regular;
+    const toneColor =
+      tone === 'secondary'
+        ? tokens.color.text.secondary
+        : tone === 'muted'
+        ? tokens.color.text.muted
+        : tone === 'inverted'
+        ? tokens.color.text.inverted
+        : tokens.color.text.primary;
+
+    const lineHeightMultiplier = variant === 'lg' || variant === 'xl' ? tokens.font.lineHeight.relaxed : tokens.font.lineHeight.tight;
+
+    return {
+      color: toneColor,
+      fontSize,
+      fontWeight: weightValue,
+      lineHeight: Math.round(fontSize * lineHeightMultiplier),
+    };
+  }, [tokens, resolvedWeight, tone, variant]);
+
   return (
     <RNText
       accessibilityRole={rest.accessibilityRole}
-      allowFontScaling={false}
-      maxFontSizeMultiplier={1.0}
-      style={[styles.base, styles[variant], styles[weight], style]}
+      maxFontSizeMultiplier={1.1}
+      style={[baseStyles(tokens), textStyle, style]}
       {...rest}
     >
       {children}
@@ -23,31 +55,18 @@ export const Text = ({ children, variant = 'sm', weight = 'regular', style, ...r
   );
 };
 
-const styles = StyleSheet.create({
-  base: {
-    color: theme.colors.textPrimary,
-    textAlignVertical: 'center',
-    includeFontPadding: false,
-  },
-  xs: {
-    fontSize: theme.typography.xs,
-  },
-  sm: {
-    fontSize: theme.typography.sm,
-  },
-  md: {
-    fontSize: theme.typography.md,
-  },
-  lg: {
-    fontSize: theme.typography.lg,
-  },
-  regular: {
-    fontWeight: theme.fontWeight.regular,
-  },
-  medium: {
-    fontWeight: theme.fontWeight.medium,
-  },
-  bold: {
-    fontWeight: theme.fontWeight.bold,
-  },
-});
+const baseStyles = (() => {
+  let cachedTokens: Tokens | null = null;
+  let cached: { textAlignVertical: 'center'; includeFontPadding: false } | null = null;
+  return (tokens: Tokens) => {
+    if (cached && cachedTokens === tokens) {
+      return cached;
+    }
+    cachedTokens = tokens;
+    cached = {
+      textAlignVertical: 'center',
+      includeFontPadding: false,
+    } as const;
+    return cached;
+  };
+})();
