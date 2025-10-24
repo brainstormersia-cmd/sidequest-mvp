@@ -13,8 +13,7 @@ type Props = {
 
 const verticalPadding = theme.space['2xl'];
 const horizontalPadding = theme.space['2xl'];
-const minHeight = theme.space['5xl'] * 2;
-const circleSize = Math.round(theme.space['3xl'] * 1.18);
+const circleSize = Math.round(theme.space['3xl'] * 1.2);
 const borderThickness = theme.space.xxs / 2 + 1;
 const centerGap = theme.space.xs;
 
@@ -45,7 +44,7 @@ export const EmptyMissionPlaceholderCard = memo(
                 +
               </Text>
             </View>
-            <Text variant="sm" weight="medium" style={styles.title}>
+            <Text variant="md" weight="medium" style={styles.title}>
               {cta ? `${title} · ${cta}` : title}
             </Text>
           </View>
@@ -67,7 +66,6 @@ const styles = StyleSheet.create({
     shadowOffset: theme.shadow.soft.shadowOffset,
     shadowOpacity: 0.06,
     shadowRadius: theme.shadow.soft.shadowRadius,
-    elevation: theme.elevation.level1,
   },
   wrapperPressed: {
     opacity: theme.opacity.pressed,
