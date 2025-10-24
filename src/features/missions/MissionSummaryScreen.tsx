@@ -72,6 +72,8 @@ const toTitleCase = (value: string) =>
     .map((word) => (word.length ? word[0].toUpperCase() + word.slice(1) : word))
     .join(' ');
 
+const stripStatusDecorators = (value: string) => value.replace(/^[^A-Za-zÀ-ÖØ-öø-ÿ0-9]+/, '');
+
 const ActionButton = ({
   label,
   tone,
@@ -190,7 +192,8 @@ export const MissionSummaryScreen = () => {
     () => mission.statusLabel.trim() || mission.statusLabel,
     [mission.statusLabel],
   );
-  const statusHeadline = useMemo(() => toTitleCase(trimmedStatus), [trimmedStatus]);
+  const cleanedStatus = useMemo(() => stripStatusDecorators(trimmedStatus), [trimmedStatus]);
+  const statusHeadline = useMemo(() => toTitleCase(cleanedStatus), [cleanedStatus]);
   const accessibilityLabel = useMemo(
     () =>
       `${statusHeadline}, arrivo previsto in ${etaFullLabel}, progresso ${mission.progressLabel}`,
@@ -247,7 +250,7 @@ export const MissionSummaryScreen = () => {
           />
           <View style={styles.topBarContent}>
             <Text variant="sm" weight="medium" style={[styles.statusLabel, { color: statusColor }]} numberOfLines={1}>
-              🟢 {trimmedStatus}
+              {statusHeadline}
             </Text>
             <View style={styles.topBarMeta}>
               <Text variant="sm" weight="medium" style={[styles.etaLabel, { color: etaColor }]} numberOfLines={1}>
@@ -333,7 +336,7 @@ export const MissionSummaryScreen = () => {
                     style={styles.progressTrack}
                     onLayout={(event) => setTrackWidth(event.nativeEvent.layout.width)}
                   >
-                    <Animated.View style={[styles.progressFill, progressStyle]} />
+                    <Animated.View style={[styles.progressFill, progressStyle]}></Animated.View>
                   </View>
                   <Text variant="xs" weight="medium" style={styles.progressLabel} numberOfLines={1}>
                     {mission.progressLabel}

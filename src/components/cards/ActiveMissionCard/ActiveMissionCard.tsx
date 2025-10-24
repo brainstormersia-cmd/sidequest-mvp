@@ -30,6 +30,8 @@ const toTitleCase = (value: string) =>
     .map((word) => (word.length ? word[0].toUpperCase() + word.slice(1) : word))
     .join(' ');
 
+const stripStatusDecorators = (value: string) => value.replace(/^[^A-Za-zÀ-ÖØ-öø-ÿ0-9]+/, '');
+
 const ChatGlyph = () => (
   <View style={styles.chatGlyph}>
     <View style={styles.chatBubble} />
@@ -168,7 +170,11 @@ export const ActiveMissionCard: React.FC<ActiveMissionCardProps> = React.memo(
     }, [etaLabel, etaSubLabel]);
 
     const trimmedStatusLabel = useMemo(() => statusLabel.trim() || statusLabel, [statusLabel]);
-    const statusHeadlineLabel = useMemo(() => toTitleCase(trimmedStatusLabel), [trimmedStatusLabel]);
+    const cleanedStatusLabel = useMemo(
+      () => stripStatusDecorators(trimmedStatusLabel),
+      [trimmedStatusLabel],
+    );
+    const statusHeadlineLabel = useMemo(() => toTitleCase(cleanedStatusLabel), [cleanedStatusLabel]);
     const cardAccessibilityLabel = useMemo(() => {
       const segments: string[] = [];
       if (statusHeadlineLabel) {
@@ -201,7 +207,7 @@ export const ActiveMissionCard: React.FC<ActiveMissionCardProps> = React.memo(
         style={[styles.wrapper, animatedCardStyle]}
       >
         <LinearGradient
-          colors={['rgba(14,17,23,0.98)', 'rgba(23,30,41,0.86)']}
+          colors={['rgba(14,17,23,0.96)', 'rgba(23,27,35,0.96)']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.card}
@@ -252,7 +258,7 @@ export const ActiveMissionCard: React.FC<ActiveMissionCardProps> = React.memo(
 
             <View style={styles.progressBlock}>
               <View style={styles.progressTrack} onLayout={handleTrackLayout}>
-                <Animated.View style={[styles.progressFill, progressStyle]} />
+                <Animated.View style={[styles.progressFill, progressStyle]}></Animated.View>
               </View>
               {progressLabel ? (
                 <Text variant="xs" weight="medium" style={styles.progressLabel} numberOfLines={1}>
@@ -273,7 +279,12 @@ const styles = StyleSheet.create({
   wrapper: {
     borderRadius: theme.radius.lg,
     overflow: 'hidden',
-    ...theme.shadow.medium,
+    backgroundColor: 'rgba(10,12,18,0.32)',
+    ...theme.shadow.soft,
+    shadowColor: theme.shadow.medium.shadowColor,
+    shadowOffset: theme.shadow.medium.shadowOffset,
+    shadowOpacity: theme.shadow.medium.shadowOpacity,
+    shadowRadius: theme.shadow.medium.shadowRadius,
   },
   card: {
     borderRadius: theme.radius.lg,
@@ -283,10 +294,11 @@ const styles = StyleSheet.create({
   },
   cardBackdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(10, 12, 18, 0.25)',
+    backgroundColor: 'rgba(8, 11, 17, 0.28)',
   },
   cardSheen: {
     ...StyleSheet.absoluteFillObject,
+    opacity: 0.8,
   },
   cardContent: {
     gap: theme.space.lg,

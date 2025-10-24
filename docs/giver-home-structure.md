@@ -1,8 +1,8 @@
 # Struttura attuale Home Giver
 
 ## Card missione attiva (`ActiveMissionCard`)
-- **Shell vetrosa** con gradiente `rgba(14,17,23,0.98) → rgba(23,30,41,0.86)`, backdrop scuro 0.25 e sheen diagonale.
-- **Headline principale** "Sta Arrivando" (title case) bianco 96% con icona chat inline sulla stessa riga.
+- **Shell vetrosa** con gradiente `rgba(14,17,23,0.96) → rgba(23,27,35,0.96)`, backdrop scuro 0.28 e sheen diagonale più intenso su fondale ombreggiato `shadow.soft` + `shadow.medium`.
+- **Headline principale** "Sta Arrivando" (title case) bianco 96% con icona chat inline sulla stessa riga, pulita da emoji duplicate.
 - **Identità Doer**: avatar circolare, nome in grassetto, descrizione grigio 70%.
 - **Barra di avanzamento**: traccia #222832, fill blu primario animato, label percentuale sulla stessa riga allineata a destra.
 
