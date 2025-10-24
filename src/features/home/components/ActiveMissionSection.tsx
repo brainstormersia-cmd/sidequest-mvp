@@ -18,7 +18,6 @@ export const ActiveMissionSection: React.FC<ActiveMissionSectionProps> = React.m
     return (
       <View style={styles.container}>
         <ActiveMissionCard
-          role={mission.role}
           etaLabel={mission.etaLabel}
           etaSubLabel={mission.etaSubLabel}
           etaTone={mission.etaTone}
@@ -29,11 +28,8 @@ export const ActiveMissionSection: React.FC<ActiveMissionSectionProps> = React.m
           progress={mission.progress}
           progressLabel={mission.progressLabel}
           avatarInitials={mission.doerAvatarInitials}
-          roadmap={mission.roadmap}
           onPress={onPressMission}
           onPressChat={onPressChat}
-          playState="playing"
-          visible
         />
         <Pressable
           {...a11yButtonProps('Visualizza tutte le missioni attive')}

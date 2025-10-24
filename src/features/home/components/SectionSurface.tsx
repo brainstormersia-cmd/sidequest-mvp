@@ -20,11 +20,6 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.surface,
     padding: theme.space.lg,
     gap: theme.space.md,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    shadowColor: '#0B0C0E14',
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: theme.elevation.level1,
+    ...theme.shadow.soft,
   },
 });
