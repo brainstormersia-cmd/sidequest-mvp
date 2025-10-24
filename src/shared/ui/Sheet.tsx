@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { AccessibilityInfo, Animated, Modal, Pressable, StyleSheet, View } from 'react-native';
+import { AccessibilityInfo, Animated, Modal, Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { theme } from '../lib/theme';
 import { Text } from './Text';
 import { reduceMotionEnabled, a11yButtonProps, HITSLOP_44 } from '../lib/a11y';
@@ -12,6 +12,7 @@ export type SheetProps = {
   title?: string;
   accessibilityLabel?: string;
   presentation?: 'sheet' | 'overlay';
+  size?: 'auto' | 'full';
 };
 
 export const Sheet = ({
@@ -21,10 +22,12 @@ export const Sheet = ({
   title,
   accessibilityLabel,
   presentation = 'sheet',
+  size = 'auto',
 }: SheetProps) => {
   const [mounted, setMounted] = useState(visible);
   const animated = useRef(new Animated.Value(0)).current;
   const [reduceMotion, setReduceMotion] = useState(false);
+  const { height: windowHeight } = useWindowDimensions();
 
   useEffect(() => {
     reduceMotionEnabled().then(setReduceMotion).catch(() => setReduceMotion(false));
@@ -61,12 +64,13 @@ export const Sheet = ({
     if (presentation === 'overlay') {
       return { opacity: animated };
     }
+    const hiddenOffset = size === 'full' ? windowHeight : 400;
     const translateY = animated.interpolate({
       inputRange: [0, 1],
-      outputRange: [400, 0],
+      outputRange: [hiddenOffset, 0],
     });
     return { transform: [{ translateY }] };
-  }, [animated, presentation]);
+  }, [animated, presentation, size, windowHeight]);
 
   if (!mounted) {
     return null;
@@ -93,6 +97,7 @@ export const Sheet = ({
         <Animated.View
           style={[
             presentation === 'overlay' ? styles.overlayContent : styles.sheetContainer,
+            size === 'full' ? styles.sheetContainerFull : null,
             animatedStyle,
           ]}
         >
@@ -139,6 +144,10 @@ const styles = StyleSheet.create({
     borderTopRightRadius: theme.radius.lg,
     padding: theme.spacing.md,
     gap: theme.spacing.md,
+  },
+  sheetContainerFull: {
+    flex: 1,
+    maxHeight: '100%',
   },
   header: {
     flexDirection: 'row',
