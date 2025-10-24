@@ -12,6 +12,7 @@ type Props = {
 };
 
 const verticalPadding = theme.space.lg;
+const horizontalPadding = theme.space.lg;
 const circleSize = theme.space['3xl'];
 const borderThickness = theme.space.xxs / 2;
 const gap = theme.space.sm - theme.space.xxs;
@@ -32,7 +33,7 @@ export const EmptyMissionPlaceholderCard = memo(
         style={({ pressed }) => [styles.wrapper, pressed ? styles.wrapperPressed : null]}
       >
         <LinearGradient
-          colors={[theme.colors.background, theme.colors.surfaceAlt]}
+          colors={[theme.colors.background, theme.colors.surface]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.gradient}
@@ -59,7 +60,7 @@ const styles = StyleSheet.create({
   wrapper: {
     borderRadius: theme.radius.xl,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.border,
+    borderColor: theme.colors.borderMuted,
     overflow: 'hidden',
     backgroundColor: theme.colors.surface,
   },
@@ -67,6 +68,7 @@ const styles = StyleSheet.create({
     opacity: theme.opacity.pressed,
   },
   gradient: {
+    paddingHorizontal: horizontalPadding,
     paddingVertical: verticalPadding,
     justifyContent: 'center',
   },
