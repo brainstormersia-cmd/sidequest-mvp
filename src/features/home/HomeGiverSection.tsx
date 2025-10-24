@@ -58,20 +58,7 @@ export const HomeGiverSection: React.FC<HomeGiverSectionProps> = ({
   };
 
   const missionSelectorState = state as MissionSelectorState;
-  const { selectMissionsByDate, selectActiveMissionByDate } = missionSelectorState;
-
-  const missionsForSelectedDate = useMemo<unknown[]>(() => {
-    if (typeof selectMissionsByDate === 'function') {
-      const result = selectMissionsByDate(selectedDate);
-      return Array.isArray(result) ? result : [];
-    }
-
-    if (state.kind === 'active' || state.kind === 'recent') {
-      return state.recentMissions;
-    }
-
-    return [];
-  }, [selectMissionsByDate, selectedDate, state]);
+  const { selectActiveMissionByDate } = missionSelectorState;
 
   const activeMissionForSelectedDate = useMemo<ActiveMissionModel | null>(() => {
     if (typeof selectActiveMissionByDate === 'function') {
@@ -80,8 +67,6 @@ export const HomeGiverSection: React.FC<HomeGiverSectionProps> = ({
 
     return state.kind === 'active' ? state.activeMission : null;
   }, [selectActiveMissionByDate, selectedDate, state]);
-
-  const hasAnyMissionsForSelectedDate = missionsForSelectedDate.length > 0;
 
   const handlePressActiveMission = useCallback(() => {
     if (!activeMissionForSelectedDate) {
@@ -156,42 +141,48 @@ export const HomeGiverSection: React.FC<HomeGiverSectionProps> = ({
     <View style={styles.container}>
       <NewsPills items={newsItems} />
 
-      {activeMissionForSelectedDate ? (
-        <ActiveMissionCard
-          etaLabel={activeMissionForSelectedDate.etaLabel}
-          etaSubLabel={activeMissionForSelectedDate.etaSubLabel}
-          etaTone={activeMissionForSelectedDate.etaTone}
-          statusLabel={activeMissionForSelectedDate.statusLabel}
-          statusTone={activeMissionForSelectedDate.statusTone}
-          title={activeMissionForSelectedDate.doerName}
-          subtitle={activeMissionForSelectedDate.doerSummary}
-          progress={activeMissionForSelectedDate.progress}
-          progressLabel={activeMissionForSelectedDate.progressLabel}
-          avatarInitials={activeMissionForSelectedDate.doerAvatarInitials}
-          onPress={handlePressActiveMission}
-          onPressChat={handlePressActiveChat}
+      <View style={styles.heroSlot}>
+        {activeMissionForSelectedDate ? (
+          <ActiveMissionCard
+            etaLabel={activeMissionForSelectedDate.etaLabel}
+            etaSubLabel={activeMissionForSelectedDate.etaSubLabel}
+            etaTone={activeMissionForSelectedDate.etaTone}
+            statusLabel={activeMissionForSelectedDate.statusLabel}
+            statusTone={activeMissionForSelectedDate.statusTone}
+            title={activeMissionForSelectedDate.doerName}
+            subtitle={activeMissionForSelectedDate.doerSummary}
+            progress={activeMissionForSelectedDate.progress}
+            progressLabel={activeMissionForSelectedDate.progressLabel}
+            avatarInitials={activeMissionForSelectedDate.doerAvatarInitials}
+            onPress={handlePressActiveMission}
+            onPressChat={handlePressActiveChat}
+          />
+        ) : (
+          <EmptyMissionPlaceholderCard onCreate={handleCreateMission} />
+        )}
+      </View>
+
+      <View style={styles.calendarBlock}>
+        <CalendarPillsV2
+          selectedDate={selectedDate}
+          onChange={handleChangeCalendar}
+          rightAccessory={
+            <Pressable
+              {...a11yButtonProps('Visualizza tutte')}
+              hitSlop={HITSLOP_44}
+              onPress={handleViewAllActive}
+            >
+              <Text variant="xs" weight="medium" style={styles.viewAllLabel}>
+                Visualizza tutte →
+              </Text>
+            </Pressable>
+          }
         />
-      ) : (
-        <EmptyMissionPlaceholderCard onCreate={handleCreateMission} />
-      )}
+      </View>
 
-      <CalendarPillsV2
-        selectedDate={selectedDate}
-        onChange={handleChangeCalendar}
-        rightAccessory={
-          <Pressable
-            {...a11yButtonProps('Visualizza tutte')}
-            hitSlop={HITSLOP_44}
-            onPress={handleViewAllActive}
-          >
-            <Text variant="xs" weight="medium" style={styles.viewAllLabel}>
-              Visualizza tutte →
-            </Text>
-          </Pressable>
-        }
-      />
-
-      {hasAnyMissionsForSelectedDate ? <TetrisGrid items={gridItems} /> : null}
+      <View style={styles.dashboard}>
+        <TetrisGrid items={gridItems} />
+      </View>
 
       {state.kind === 'returning' ? (
         <ReturningSection exampleMission={state.exampleMission} suggestion={state.suggestion} />
@@ -210,7 +201,15 @@ export const HomeGiverSection: React.FC<HomeGiverSectionProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    gap: theme.space.sm,
+    gap: theme.space.md,
+  },
+  heroSlot: {},
+  calendarBlock: {
+    paddingTop: theme.space.xs,
+    paddingBottom: theme.space.xs,
+  },
+  dashboard: {
+    paddingTop: theme.space.sm,
   },
   viewAllLabel: {
     color: theme.colors.primary,

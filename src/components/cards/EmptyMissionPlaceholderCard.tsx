@@ -11,11 +11,10 @@ type Props = {
   cta?: string;
 };
 
-const verticalPadding = theme.space['2xl'];
-const horizontalPadding = theme.space['2xl'];
-const circleSize = Math.round(theme.space['3xl'] * 1.2);
-const borderThickness = theme.space.xxs / 2 + 1;
-const centerGap = theme.space.xs;
+const cardPadding = theme.space['2xl'];
+const circleSize = theme.space['3xl'];
+const borderThickness = 1;
+const centerGap = theme.space.lg;
 
 export const EmptyMissionPlaceholderCard = memo(
   ({
@@ -33,11 +32,19 @@ export const EmptyMissionPlaceholderCard = memo(
         style={({ pressed }) => [styles.wrapper, pressed ? styles.wrapperPressed : null]}
       >
         <LinearGradient
-          colors={['#FFFFFF', '#F2F2F2']}
+          colors={['rgba(14,17,23,0.98)', 'rgba(26,32,44,0.9)']}
           start={{ x: 0, y: 0 }}
-          end={{ x: 0, y: 1 }}
-          style={styles.gradient}
+          end={{ x: 1, y: 1 }}
+          style={styles.card}
         >
+          <View style={styles.cardBackdrop} pointerEvents="none" />
+          <LinearGradient
+            colors={['rgba(255,255,255,0.18)', 'rgba(255,255,255,0.04)']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.cardSheen}
+            pointerEvents="none"
+          />
           <View style={styles.center}>
             <View style={styles.circle}>
               <Text variant="lg" weight="bold" style={styles.plus}>
@@ -60,21 +67,31 @@ const styles = StyleSheet.create({
   wrapper: {
     borderRadius: theme.radius.lg,
     overflow: 'hidden',
-    backgroundColor: theme.colors.surface,
+    backgroundColor: 'rgba(10,12,18,0.44)',
     ...theme.shadow.soft,
-    shadowColor: theme.shadow.soft.shadowColor,
-    shadowOffset: theme.shadow.soft.shadowOffset,
-    shadowOpacity: 0.06,
-    shadowRadius: theme.shadow.soft.shadowRadius,
+    shadowColor: theme.shadow.medium.shadowColor,
+    shadowOffset: theme.shadow.medium.shadowOffset,
+    shadowOpacity: Math.max(theme.shadow.medium.shadowOpacity, 0.32),
+    shadowRadius: theme.shadow.medium.shadowRadius + 6,
   },
   wrapperPressed: {
     opacity: theme.opacity.pressed,
   },
-  gradient: {
-    paddingHorizontal: horizontalPadding,
-    paddingVertical: verticalPadding,
-    minHeight,
+  card: {
+    borderRadius: theme.radius.lg,
+    paddingHorizontal: cardPadding,
+    paddingVertical: cardPadding,
+    minHeight: theme.size.cardHeroMinHeight,
     justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  cardBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(10,13,19,0.36)',
+  },
+  cardSheen: {
+    ...StyleSheet.absoluteFillObject,
+    opacity: 0.9,
   },
   center: {
     alignItems: 'center',
@@ -86,16 +103,19 @@ const styles = StyleSheet.create({
     height: circleSize,
     borderRadius: theme.radius.full,
     borderWidth: borderThickness,
-    borderColor: theme.colors.textSubtle,
+    borderColor: 'rgba(255,255,255,0.24)',
     borderStyle: 'dashed',
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.08)',
   },
   plus: {
-    color: theme.colors.textSubtle,
+    color: 'rgba(255,255,255,0.88)',
+    fontSize: theme.typography.lg * 1.8,
+    lineHeight: theme.typography.lg * 1.8,
   },
   title: {
-    color: theme.colors.textSecondary,
+    color: 'rgba(255,255,255,0.85)',
     textAlign: 'center',
   },
 });

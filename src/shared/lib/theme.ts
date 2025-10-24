@@ -41,6 +41,13 @@ export const tokens = {
     '3xl': 40,
     '4xl': 48,
     '5xl': 64,
+    '6xl': 80,
+    '7xl': 96,
+    '8xl': 112,
+    '9xl': 128,
+    '10xl': 160,
+    '11xl': 192,
+    '12xl': 224,
   },
   radius: {
     none: 0,
@@ -104,6 +111,9 @@ export const tokens = {
     targetMin: 44,
     hitSlop: 16,
   },
+  size: {
+    cardHeroMinHeight: 224,
+  },
 };
 
 export const theme = {
@@ -136,6 +146,7 @@ export const theme = {
   motion: tokens.motion,
   touch: tokens.touch,
   shadow: tokens.shadow,
+  size: tokens.size,
 };
 
 export type Theme = typeof theme;
