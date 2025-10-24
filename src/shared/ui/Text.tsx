@@ -33,7 +33,10 @@ export const Text = ({
         ? tokens.color.text.inverted
         : tokens.color.text.primary;
 
-    const lineHeightMultiplier = variant === 'lg' || variant === 'xl' ? tokens.font.lineHeight.relaxed : tokens.font.lineHeight.tight;
+    const lineHeightMultiplier =
+      variant === 'lg' || variant === 'xl'
+        ? tokens.font.lineHeight.relaxed
+        : tokens.font.lineHeight.tight;
 
     return {
       color: toneColor,

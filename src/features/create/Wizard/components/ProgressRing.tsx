@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { useTokens } from '../../../shared/lib/theme';
+import { useTokens } from '../../../../shared/lib/theme';
 
 type Props = {
   progress: number;
