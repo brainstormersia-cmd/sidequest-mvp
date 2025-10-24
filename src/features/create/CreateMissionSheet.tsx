@@ -1,191 +1,299 @@
-import React, { useMemo, useState } from 'react';
-import { Alert, View, StyleSheet } from 'react-native';
-import { Step1Basics, MissionDraft } from './Wizard/Step1Basics';
-import { Step2Schedule } from './Wizard/Step2Schedule';
-import { Step3Incentives } from './Wizard/Step3Incentives';
-import { Step4Review } from './Wizard/Step4Review';
-import { Button } from '../../shared/ui/Button';
-import { strings } from '../../config/strings';
-import { Text } from '../../shared/ui/Text';
-import { theme } from '../../shared/lib/theme';
+import React from 'react';
+import { ActivityIndicator, Alert, View } from 'react-native';
+import * as Haptics from 'expo-haptics';
+import { WizardProvider, useWizard } from './Wizard/context';
+import { WizardShell } from './Wizard/WizardShell';
+import { Step1Details } from './Wizard/steps/Step1Details';
+import { Step2Location } from './Wizard/steps/Step2Location';
+import { Step3Schedule } from './Wizard/steps/Step3Schedule';
+import { Step4Price } from './Wizard/steps/Step4Price';
+import { Step5Requirements } from './Wizard/steps/Step5Requirements';
+import { Step6Summary } from './Wizard/steps/Step6Summary';
+import { SummaryField } from './Wizard/components/SummaryPeek';
+import { MissionDraft } from './Wizard/types';
+import { formatWhen } from './Wizard/utils/format';
 import { submitMission } from './api/create.api';
 import { getOrCreateDeviceId } from '../../shared/lib/device';
 import { hasSupabase } from '../../shared/lib/supabase';
-
-const defaultDraft: MissionDraft = {
-  title: '',
-  description: '',
-  location: '',
-  date: '',
-  reward: '',
-  tags: '',
-  contact_visible: '',
-};
-
-const steps = [
-  { key: 'step-1', title: strings.create.step1Title, subtitle: strings.create.step1Subtitle },
-  { key: 'step-2', title: strings.create.step2Title, subtitle: strings.create.step2Subtitle },
-  { key: 'step-3', title: strings.create.step3Title, subtitle: strings.create.step3Subtitle },
-  { key: 'step-4', title: strings.create.step4Title, subtitle: strings.create.step4Subtitle },
-];
+import { MissionInput } from '../missions/model/mission.types';
+import { Text } from '../../shared/ui/Text';
+import { useTokens } from '../../shared/lib/theme';
 
 type Props = {
   closeSheet?: () => void;
 };
 
-export const CreateMissionSheet = ({ closeSheet }: Props) => {
-  const [stepIndex, setStepIndex] = useState(0);
-  const [draft, setDraft] = useState<MissionDraft>(defaultDraft);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
-  const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof MissionDraft, string>>>({});
+type StepDefinition = {
+  key: string;
+  title: string;
+  subtitle: string;
+  render: (callbacks: StepCallbacks) => React.ReactNode;
+};
 
-  const currentStep = steps[stepIndex];
+type StepCallbacks = {
+  onQuickMission: () => void;
+  onTemplateSelected: (key: string) => void;
+  onRemoteChanged: (remote: boolean) => void;
+  onEditSummary: (field: SummaryField) => void;
+};
 
-  const requiredFields: Record<number, (keyof MissionDraft)[]> = useMemo(
-    () => ({
-      0: ['title'],
-      1: ['location'],
-    }),
-    [],
+const stepDefinitions: StepDefinition[] = [
+  {
+    key: 'details',
+    title: 'Cosa serve?',
+    subtitle: 'Descrivi brevemente la missione.',
+    render: ({ onQuickMission, onTemplateSelected }) => (
+      <Step1Details onQuickMission={onQuickMission} onTemplateSelected={onTemplateSelected} />
+    ),
+  },
+  {
+    key: 'location',
+    title: 'Dove?',
+    subtitle: 'Indica indirizzo o scegli remoto.',
+    render: ({ onRemoteChanged }) => <Step2Location onRemoteChanged={onRemoteChanged} />,
+  },
+  {
+    key: 'schedule',
+    title: 'Quando?',
+    subtitle: 'Scegli il momento migliore.',
+    render: () => <Step3Schedule />,
+  },
+  {
+    key: 'price',
+    title: 'Compenso',
+    subtitle: 'Definisci offerta e priorità.',
+    render: () => <Step4Price />,
+  },
+  {
+    key: 'requirements',
+    title: 'Dettagli',
+    subtitle: 'Requisiti, accessi e allegati.',
+    render: () => <Step5Requirements />,
+  },
+  {
+    key: 'summary',
+    title: 'Riepilogo',
+    subtitle: 'Controlla e pubblica.',
+    render: ({ onEditSummary }) => <Step6Summary onEditField={onEditSummary} />,
+  },
+];
+
+const summaryFieldToStep: Record<SummaryField, number> = {
+  title: 0,
+  category: 0,
+  datetime: 2,
+  address: 1,
+  price: 3,
+  notes: 4,
+  visibility: 5,
+};
+
+const CreateMissionWizard = ({ closeSheet }: Props) => {
+  const { state, setErrors, clearErrors, loadingDraft, reset } = useWizard();
+  const [stepIndex, setStepIndex] = React.useState(0);
+  const [publishing, setPublishing] = React.useState(false);
+  const [toast, setToast] = React.useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
+
+  const currentStep = stepDefinitions[stepIndex];
+
+  React.useEffect(() => {
+    clearErrors();
+    setErrorMessage(null);
+  }, [stepIndex, clearErrors]);
+
+  const validateStep = React.useCallback(
+    (index: number) => {
+      const issues: Record<string, string> = {};
+      if (index === 0 && !state.title.trim()) {
+        issues.title = 'Inserisci un titolo chiaro.';
+      }
+      if (index === 1 && state.location.mode !== 'remote' && !state.location.address.trim()) {
+        issues['location.address'] = 'Serve un indirizzo.';
+      }
+      if (index === 5) {
+        if (!state.title.trim()) {
+          issues.title = 'Titolo obbligatorio.';
+        }
+        if (state.location.mode !== 'remote' && !state.location.address.trim()) {
+          issues['location.address'] = 'Aggiungi il luogo prima di pubblicare.';
+        }
+      }
+      return issues;
+    },
+    [state],
   );
 
-  const handleChange = (field: keyof MissionDraft, value: string) => {
-    setDraft((prev) => ({ ...prev, [field]: value }));
-    setFieldErrors((prev) => ({ ...prev, [field]: undefined }));
-  };
-
-  const validateStep = () => {
-    const newErrors: Partial<Record<keyof MissionDraft, string>> = {};
-    const fields = requiredFields[stepIndex] ?? [];
-    fields.forEach((field) => {
-      if (!draft[field]?.trim()) {
-        newErrors[field] = strings.accessibility.requiredField;
+  const goToSummaryField = React.useCallback(
+    (field: SummaryField) => {
+      const target = summaryFieldToStep[field];
+      if (target !== undefined) {
+        setStepIndex(target);
       }
-    });
-    if (stepIndex === 0 && draft.title.trim().length > 0 && draft.title.trim().length < 4) {
-      newErrors.title = strings.create.titleMinLength;
-    }
-    setFieldErrors((prev) => ({ ...prev, ...newErrors }));
-    return newErrors;
-  };
+    },
+    [setStepIndex],
+  );
 
   const handleNext = async () => {
-    const validation = validateStep();
-    if (Object.keys(validation).length > 0) {
-      setError(strings.accessibility.validationError);
+    const issues = validateStep(stepIndex);
+    setErrors(issues);
+    if (Object.keys(issues).length > 0) {
+      setErrorMessage('Completa i campi evidenziati prima di proseguire.');
       return;
     }
-    setError(null);
-    setSuccess(false);
-    if (stepIndex < steps.length - 1) {
+    if (stepIndex < stepDefinitions.length - 1) {
       setStepIndex((prev) => prev + 1);
     } else {
-      setLoading(true);
-      try {
-        if (!hasSupabase) {
-          Alert.alert(strings.create.offlineTitle, strings.create.offlineMessage);
-          closeSheet?.();
-          return;
-        }
-        const deviceId = await getOrCreateDeviceId();
-        const payload = {
-          title: draft.title.trim(),
-          description: draft.description.trim() || undefined,
-          location: draft.location.trim() || undefined,
-          date: draft.date || undefined,
-          reward: draft.reward.trim() || undefined,
-          tags: draft.tags
-            .split(',')
-            .map((tag) => tag.trim())
-            .filter(Boolean),
-          contact_visible: draft.contact_visible.trim() || undefined,
-        };
-        await submitMission(payload, deviceId);
-        setSuccess(true);
-        setDraft(defaultDraft);
-        setStepIndex(0);
-        setTimeout(() => {
-          closeSheet?.();
-        }, 600);
-      } catch (missionError) {
-        console.warn('Errore pubblicazione missione', missionError);
-        setError(strings.create.error);
-      } finally {
-        setLoading(false);
+      await handlePublish();
+    }
+  };
+
+  const handlePublish = async () => {
+    if (publishing) {
+      return;
+    }
+    const finalIssues = validateStep(5);
+    setErrors(finalIssues);
+    if (Object.keys(finalIssues).length > 0) {
+      setErrorMessage('Controlla i campi obbligatori prima della pubblicazione.');
+      return;
+    }
+
+    try {
+      setPublishing(true);
+      setErrorMessage(null);
+      if (!hasSupabase) {
+        Alert.alert('Offline', 'Connettiti per pubblicare la missione.');
+        return;
       }
+      const deviceId = await getOrCreateDeviceId();
+      const payload = mapDraftToMissionInput(state);
+      await submitMission(payload, deviceId);
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      setToast('Missione pubblicata · visibile ai Doer nelle vicinanze');
+      await reset();
+      setStepIndex(0);
+      setTimeout(() => {
+        setToast(null);
+        closeSheet?.();
+      }, 1200);
+    } catch (error) {
+      console.warn('Errore pubblicazione missione', error);
+      setErrorMessage('Non siamo riusciti a pubblicare la missione. Riprova più tardi.');
+    } finally {
+      setPublishing(false);
     }
   };
 
   const handleBack = () => {
-    setError(null);
-    if (stepIndex > 0) {
-      setStepIndex((prev) => prev - 1);
-    } else {
+    if (stepIndex === 0) {
       closeSheet?.();
+    } else {
+      setStepIndex((prev) => Math.max(0, prev - 1));
     }
   };
 
-  const StepContent = () => {
-    switch (stepIndex) {
-      case 0:
-        return <Step1Basics values={draft} onChange={handleChange} errors={fieldErrors} />;
-      case 1:
-        return <Step2Schedule values={draft} onChange={handleChange} errors={fieldErrors} />;
-      case 2:
-        return <Step3Incentives values={draft} onChange={handleChange} />;
-      case 3:
-        return <Step4Review values={draft} />;
-      default:
-        return null;
-    }
+  const handleSaveDraft = () => {
+    setToast('Bozza salvata automaticamente.');
+    setTimeout(() => setToast(null), 1200);
   };
+
+  const callbacks: StepCallbacks = React.useMemo(
+    () => ({
+      onQuickMission: () => setStepIndex(stepDefinitions.length - 1),
+      onTemplateSelected: () => setStepIndex(1),
+      onRemoteChanged: (remote) => {
+        if (remote) {
+          clearErrors();
+        }
+      },
+      onEditSummary: goToSummaryField,
+    }),
+    [clearErrors, goToSummaryField],
+  );
+
+  if (loadingDraft) {
+    return <ActivityIndicator />;
+  }
+
+  const secondaryAction = stepIndex === stepDefinitions.length - 1
+    ? { label: 'Salva bozza', onPress: handleSaveDraft }
+    : undefined;
 
   return (
-    <View style={styles.container}>
-      <Text variant="md" weight="bold" accessibilityRole="header">
-        {currentStep.title}
+    <WizardShell
+      step={stepIndex + 1}
+      total={stepDefinitions.length}
+      title={currentStep.title}
+      subtitle={currentStep.subtitle}
+      onNext={handleNext}
+      onBack={handleBack}
+      nextLabel={stepIndex === stepDefinitions.length - 1 ? 'Pubblica missione' : 'Avanti'}
+      nextDisabled={publishing}
+      loading={publishing}
+      onEditSummary={goToSummaryField}
+      secondaryAction={secondaryAction}
+    >
+      {toast ? (
+        <TextBanner tone="success" message={toast} />
+      ) : null}
+      {errorMessage ? <TextBanner tone="danger" message={errorMessage} /> : null}
+      {currentStep.render(callbacks)}
+    </WizardShell>
+  );
+};
+
+const TextBanner = ({ message, tone }: { message: string; tone: 'success' | 'danger' }) => {
+  const tokens = useTokens();
+  const background = tone === 'success' ? tokens.color.state.good : tokens.color.state.danger;
+  return (
+    <View
+      style={{
+        padding: tokens.space.sm,
+        borderRadius: tokens.radius.lg,
+        marginBottom: tokens.space.sm,
+        backgroundColor: background,
+      }}
+    >
+      <Text variant="xs" tone="inverted" weight="semibold">
+        {message}
       </Text>
-      <Text variant="xs" style={styles.subtitle}>
-        {currentStep.subtitle}
-      </Text>
-      <View style={styles.content}>
-        <StepContent />
-      </View>
-      {error ? <Text style={styles.error}>{error}</Text> : null}
-      {success ? <Text style={styles.success}>{strings.create.success}</Text> : null}
-      <View style={styles.actions}>
-        <Button label={strings.create.back} onPress={handleBack} variant="secondary" />
-        <Button
-          label={stepIndex === steps.length - 1 ? strings.create.publish : strings.create.next}
-          onPress={handleNext}
-          loading={loading}
-        />
-      </View>
     </View>
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    gap: theme.spacing.sm,
-  },
-  subtitle: {
-    color: theme.colors.textSecondary,
-  },
-  content: {
-    gap: theme.spacing.md,
-  },
-  actions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: theme.spacing.sm,
-  },
-  error: {
-    color: theme.colors.error,
-  },
-  success: {
-    color: theme.colors.success,
-  },
-});
+const mapDraftToMissionInput = (draft: MissionDraft): MissionInput => {
+  const tags = Array.from(new Set([draft.category, ...draft.tags, ...draft.skills].filter(Boolean)));
+  const rewardParts = [`${draft.price} €`];
+  if (draft.tip && draft.tip > 0) {
+    rewardParts.push(`Tip ${draft.tip} €`);
+  }
+  rewardParts.push(draft.urgency);
+  const reward = rewardParts.join(' · ');
+
+  const details = [
+    draft.description.trim(),
+    draft.notes ? `Note: ${draft.notes}` : null,
+    draft.access ? `Accesso: ${draft.access}` : null,
+    draft.visibility === 'private' ? 'Visibilità: Privata su invito.' : null,
+    `Quando: ${formatWhen(draft)}`,
+  ].filter(Boolean);
+
+  const location = draft.location.mode === 'remote' ? 'Remoto' : draft.location.address;
+  const date = draft.schedule.start ?? draft.schedule.deadline ?? undefined;
+
+  return {
+    title: draft.title.trim(),
+    description: details.join('\n') || undefined,
+    reward,
+    location: location || undefined,
+    date,
+    tags,
+  };
+};
+
+export const CreateMissionSheet = (props: Props) => (
+  <WizardProvider>
+    <CreateMissionWizard {...props} />
+  </WizardProvider>
+);

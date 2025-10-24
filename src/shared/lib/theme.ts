@@ -1,152 +1,234 @@
-export const tokens = {
-  color: {
-    background: {
-      canvas: '#FFFFFF',
-      raised: '#F7F7F8',
-      muted: '#EFF1F5',
-    },
-    foreground: {
-      base: '#0B0C0E',
-      muted: '#5B5F66',
-      subtle: '#8B9098',
-      inverted: '#FFFFFF',
-    },
-    brand: {
-      primary: '#2563EB',
-      accent: '#9333EA',
-    },
-    border: {
-      subtle: '#E5E7EB',
-      muted: '#ECEEF2',
-    },
-    feedback: {
-      success: '#22C55E',
-      warning: '#FACC15',
-      info: '#60A5FA',
-      danger: '#E5484D',
-    },
-    focus: {
-      ring: '#2563EB33',
-    },
-  },
-  space: {
-    none: 0,
-    xxs: 4,
-    xs: 8,
-    sm: 12,
-    md: 16,
-    lg: 20,
-    xl: 24,
-    '2xl': 32,
-    '3xl': 40,
-    '4xl': 48,
-    '5xl': 64,
-    '6xl': 80,
-    '7xl': 96,
-    '8xl': 112,
-    '9xl': 128,
-    '10xl': 160,
-    '11xl': 192,
-    '12xl': 224,
-  },
-  radius: {
-    none: 0,
-    sm: 8,
-    md: 12,
-    lg: 16,
-    xl: 20,
-    full: 999,
-  },
-  font: {
-    size: {
-      xs: 13,
-      sm: 14,
-      md: 16,
-      lg: 24,
-    },
-    weight: {
-      regular: '400' as const,
-      medium: '600' as const,
-      bold: '700' as const,
-    },
-  },
-  elevation: {
-    level0: 0,
-    level1: 2,
-    level2: 4,
-  },
-  shadow: {
-    soft: {
-      shadowColor: 'rgba(15, 17, 23, 0.35)',
-      shadowOffset: { width: 0, height: 16 },
-      shadowOpacity: 1,
-      shadowRadius: 32,
-    },
-    medium: {
-      shadowColor: 'rgba(15, 17, 23, 0.45)',
-      shadowOffset: { width: 0, height: 24 },
-      shadowOpacity: 1,
-      shadowRadius: 40,
-    },
-  },
-  opacity: {
-    disabled: 0.4,
-    overlay: 0.08,
-    pressed: 0.85,
-  },
-  motion: {
-    duration: {
-      instant: 0,
-      fast: 120,
-      base: 200,
-      slow: 320,
-    },
-    easing: {
-      standard: 'cubic-bezier(0.2, 0, 0, 1)',
-      entrance: 'cubic-bezier(0.32, 0.72, 0, 1)',
-      exit: 'cubic-bezier(0.4, 0, 1, 1)',
-    },
-  },
-  touch: {
-    targetMin: 44,
-    hitSlop: 16,
+import React, { createContext, useContext, useMemo } from 'react';
+import { ColorSchemeName, useColorScheme } from 'react-native';
+
+const baseSpace = {
+  none: 0,
+  xxxs: 2,
+  xxs: 4,
+  xs: 8,
+  sm: 12,
+  md: 16,
+  lg: 20,
+  xl: 24,
+  xxl: 32,
+  '3xl': 40,
+};
+
+const baseRadius = {
+  none: 0,
+  xs: 6,
+  sm: 10,
+  md: 14,
+  lg: 18,
+  xl: 999,
+};
+
+const baseFont = {
+  family: {
+    primary: 'Inter',
+    system: 'SF Pro',
   },
   size: {
-    cardHeroMinHeight: 224,
+    xs: 13,
+    sm: 15,
+    md: 17,
+    lg: 20,
+    xl: 24,
+  },
+  weight: {
+    regular: '400' as const,
+    medium: '600' as const,
+    semibold: '600' as const,
+    bold: '700' as const,
+  },
+  lineHeight: {
+    tight: 1.2,
+    relaxed: 1.45,
   },
 };
 
-export const theme = {
+const baseMotion = {
+  duration: {
+    fast: 120,
+    base: 220,
+    slow: 360,
+  },
+  easing: {
+    standard: 'cubic-bezier(0.2, 0, 0, 1)',
+    decel: 'cubic-bezier(0.32, 0.72, 0, 1)',
+    accel: 'cubic-bezier(0.4, 0, 1, 1)',
+  },
+  translate: {
+    sm: 4,
+    md: 8,
+  },
+};
+
+const baseOpacity = {
+  disabled: 0.4,
+  quiet: 0.72,
+  overlay: 0.08,
+};
+
+const baseBlur = {
+  glass: {
+    sm: 12,
+    md: 24,
+  },
+};
+
+const baseShadow = {
+  soft: {
+    color: 'rgba(15, 23, 42, 0.16)',
+    opacity: 1,
+    offset: { width: 0, height: 18 },
+    radius: 36,
+    elevation: 8,
+  },
+  medium: {
+    color: 'rgba(15, 23, 42, 0.24)',
+    opacity: 1,
+    offset: { width: 0, height: 28 },
+    radius: 48,
+    elevation: 14,
+  },
+};
+
+const baseTouch = {
+  targetMin: 48,
+  hitSlop: 12,
+};
+
+export type Tokens = ReturnType<typeof createSemanticTokens>;
+
+function createSemanticTokens(mode: 'light' | 'dark') {
+  const isDark = mode === 'dark';
+
+  const bgCanvas = isDark ? '#0F172A' : '#F6F7FB';
+  const bgSurface = isDark ? '#111827' : '#FFFFFF';
+  const bgElevated = isDark ? '#1F2937' : '#EEF0F8';
+  const glassTint = isDark ? 'rgba(17, 25, 40, 0.58)' : 'rgba(255, 255, 255, 0.7)';
+
+  const textPrimary = isDark ? '#F9FAFB' : '#0F172A';
+  const textSecondary = isDark ? 'rgba(241, 245, 249, 0.72)' : '#475569';
+  const textMuted = isDark ? 'rgba(148, 163, 184, 0.72)' : '#64748B';
+  const textInverted = isDark ? '#111827' : '#F8FAFC';
+
+  const brandPrimary = '#3730A3';
+  const brandPrimaryPressed = '#2A267F';
+  const brandSecondary = '#FF6F61';
+
+  const stateGood = '#16A34A';
+  const stateWarn = '#F59E0B';
+  const stateDanger = '#DC2626';
+
+  return {
+    mode,
+    color: {
+      bg: {
+        canvas: bgCanvas,
+        surface: bgSurface,
+        elevated: bgElevated,
+        glass: glassTint,
+      },
+      text: {
+        primary: textPrimary,
+        secondary: textSecondary,
+        muted: textMuted,
+        inverted: textInverted,
+      },
+      brand: {
+        primary: brandPrimary,
+        primaryPressed: brandPrimaryPressed,
+        secondary: brandSecondary,
+      },
+      state: {
+        good: stateGood,
+        warn: stateWarn,
+        danger: stateDanger,
+      },
+      border: {
+        default: isDark ? 'rgba(148, 163, 184, 0.24)' : '#CBD5F5',
+        subtle: isDark ? 'rgba(148, 163, 184, 0.18)' : '#E2E8F0',
+      },
+      gradient: {
+        brand: isDark ? ['#4338CA', '#7C3AED'] : ['#6366F1', '#A855F7'],
+      },
+    },
+    font: baseFont,
+    space: baseSpace,
+    radius: baseRadius,
+    shadow: baseShadow,
+    motion: baseMotion,
+    opacity: baseOpacity,
+    blur: baseBlur,
+    size: {
+      touch: {
+        min: 48,
+      },
+    },
+    touch: baseTouch,
+  };
+}
+
+const lightTokens = createSemanticTokens('light');
+const darkTokens = createSemanticTokens('dark');
+
+const TokensContext = createContext<Tokens>(lightTokens);
+
+export const TokensProvider = ({
+  mode,
+  children,
+}: {
+  mode?: ColorSchemeName;
+  children: React.ReactNode;
+}) => {
+  const deviceScheme = useColorScheme();
+  const activeMode = mode ?? deviceScheme ?? 'light';
+  const value = useMemo(() => (activeMode === 'dark' ? darkTokens : lightTokens), [activeMode]);
+  return <TokensContext.Provider value={value}>{children}</TokensContext.Provider>;
+};
+
+export const useTokens = () => useContext(TokensContext);
+
+const mapTokensToTheme = (tokens: Tokens) => ({
   colors: {
-    background: tokens.color.background.canvas,
-    surface: tokens.color.background.raised,
-    surfaceAlt: tokens.color.background.muted,
+    background: tokens.color.bg.canvas,
+    surface: tokens.color.bg.surface,
+    surfaceAlt: tokens.color.bg.elevated,
     primary: tokens.color.brand.primary,
-    accent: tokens.color.brand.accent,
-    textPrimary: tokens.color.foreground.base,
-    textSecondary: tokens.color.foreground.muted,
-    textSubtle: tokens.color.foreground.subtle,
-    border: tokens.color.border.subtle,
-    borderMuted: tokens.color.border.muted,
-    success: tokens.color.feedback.success,
-    warning: tokens.color.feedback.warning,
-    info: tokens.color.feedback.info,
-    error: tokens.color.feedback.danger,
-    focus: tokens.color.focus.ring,
-    onPrimary: tokens.color.foreground.inverted,
-    onSurface: tokens.color.foreground.base,
+    accent: tokens.color.brand.secondary,
+    textPrimary: tokens.color.text.primary,
+    textSecondary: tokens.color.text.secondary,
+    textSubtle: tokens.color.text.muted,
+    border: tokens.color.border.default,
+    borderMuted: tokens.color.border.subtle,
+    success: tokens.color.state.good,
+    warning: tokens.color.state.warn,
+    info: tokens.color.state.good,
+    error: tokens.color.state.danger,
+    focus: tokens.color.gradient.brand[0],
+    onPrimary: tokens.color.text.inverted,
+    onSurface: tokens.color.text.primary,
   },
   spacing: tokens.space,
   space: tokens.space,
   radius: tokens.radius,
   typography: tokens.font.size,
+  fontFamily: tokens.font.family,
   fontWeight: tokens.font.weight,
-  elevation: tokens.elevation,
-  opacity: tokens.opacity,
+  lineHeight: tokens.font.lineHeight,
   motion: tokens.motion,
-  touch: tokens.touch,
+  opacity: { ...tokens.opacity, pressed: 0.92 },
+  touch: { ...tokens.touch, targetMin: tokens.size.touch.min },
   shadow: tokens.shadow,
   size: tokens.size,
-};
+});
 
-export type Theme = typeof theme;
+export const tokens = lightTokens;
+
+export const theme = mapTokensToTheme(tokens);
+
+export const getThemeForMode = (mode: 'light' | 'dark') => mapTokensToTheme(mode === 'dark' ? darkTokens : lightTokens);
+
+export type Theme = ReturnType<typeof mapTokensToTheme>;
