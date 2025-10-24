@@ -8,7 +8,7 @@ import {
 import { theme } from '../../shared/lib/theme';
 import { ActiveMissionModel, GiverHomeState } from './useGiverHomeState';
 import { NewsPills } from '../../components/pills/NewsPills';
-import { EmptyMissionPlaceholderCard } from '../../components/cards/EmptyMissionPlaceholderCard';
+import { EmptyMissionPlaceholderCard } from './EmptyMissionPlaceholderCard';
 import { CalendarPillsV2 } from '../../components/pills/CalendarPillsV2';
 import { TetrisGrid } from '../../components/grids/TetrisGrid';
 import { Text } from '../../shared/ui/Text';
@@ -53,25 +53,11 @@ export const HomeGiverSection: React.FC<HomeGiverSectionProps> = ({
     state.kind === 'active' || state.kind === 'recent' ? state.recentMissions : [];
 
   type MissionSelectorState = GiverHomeState & {
-    selectMissionsByDate?: (date: Date) => unknown[];
     selectActiveMissionByDate?: (date: Date) => ActiveMissionModel | null | undefined;
   };
 
   const missionSelectorState = state as MissionSelectorState;
-  const { selectMissionsByDate, selectActiveMissionByDate } = missionSelectorState;
-
-  const missionsForSelectedDate = useMemo<unknown[]>(() => {
-    if (typeof selectMissionsByDate === 'function') {
-      const result = selectMissionsByDate(selectedDate);
-      return Array.isArray(result) ? result : [];
-    }
-
-    if (state.kind === 'active' || state.kind === 'recent') {
-      return state.recentMissions;
-    }
-
-    return [];
-  }, [selectMissionsByDate, selectedDate, state]);
+  const { selectActiveMissionByDate } = missionSelectorState;
 
   const activeMissionForSelectedDate = useMemo<ActiveMissionModel | null>(() => {
     if (typeof selectActiveMissionByDate === 'function') {
@@ -80,8 +66,6 @@ export const HomeGiverSection: React.FC<HomeGiverSectionProps> = ({
 
     return state.kind === 'active' ? state.activeMission : null;
   }, [selectActiveMissionByDate, selectedDate, state]);
-
-  const hasAnyMissionsForSelectedDate = missionsForSelectedDate.length > 0;
 
   const handlePressActiveMission = useCallback(() => {
     if (!activeMissionForSelectedDate) {
@@ -133,34 +117,27 @@ export const HomeGiverSection: React.FC<HomeGiverSectionProps> = ({
     [handleCreateMission, handleOpenExamplesPress, handleViewAllActive],
   );
 
-  const selectHomeSectionsByDate = useCallback(
-    (date: Date) => {
-      const dayIndex = date.getDate();
-      const isEvenDay = dayIndex % 2 === 0;
-
-      return [
-        { id: 'grid-1', title: 'Tutorial', kind: 'large' as const, onPress: handleOpenExamplesPress },
-        { id: 'grid-2', title: 'Statistiche', kind: 'small' as const, onPress: handleViewAllActive },
-        { id: 'grid-3', title: 'Missioni recenti', kind: 'small' as const, onPress: handleOpenLatestMission },
-        {
-          id: 'grid-4',
-          title: isEvenDay ? 'Consigliati oggi' : 'Suggeriti per te',
-          kind: 'medium' as const,
-          onPress: handleOpenSuggestions,
-        },
-      ];
-    },
+  const gridItems = useMemo(
+    () => [
+      { id: 'grid-1', title: 'Tutorial', kind: 'large' as const, onPress: handleOpenExamplesPress },
+      { id: 'grid-2', title: 'Statistiche', kind: 'small' as const, onPress: handleViewAllActive },
+      { id: 'grid-3', title: 'Missioni recenti', kind: 'small' as const, onPress: handleOpenLatestMission },
+      {
+        id: 'grid-4',
+        title: 'Suggeriti per te',
+        kind: 'medium' as const,
+        onPress: handleOpenSuggestions,
+      },
+    ],
     [handleOpenExamplesPress, handleOpenLatestMission, handleOpenSuggestions, handleViewAllActive],
   );
 
-  const gridItems = useMemo(
-    () => selectHomeSectionsByDate(selectedDate),
-    [selectHomeSectionsByDate, selectedDate],
+  const handleChangeCalendar = useCallback(
+    (date: Date) => {
+      setSelectedDate(date);
+    },
+    [setSelectedDate],
   );
-
-  const handleChangeCalendar = useCallback((date: Date) => {
-    setSelectedDate(date);
-  }, []);
 
   return (
     <View style={styles.container}>
@@ -182,7 +159,11 @@ export const HomeGiverSection: React.FC<HomeGiverSectionProps> = ({
           onPressChat={handlePressActiveChat}
         />
       ) : (
-        <EmptyMissionPlaceholderCard onCreate={handleCreateMission} />
+        <EmptyMissionPlaceholderCard
+          onCreate={handleCreateMission}
+          title="Non hai ancora programmato nulla"
+          cta="Aggiungi missione"
+        />
       )}
 
       <CalendarPillsV2
@@ -201,7 +182,7 @@ export const HomeGiverSection: React.FC<HomeGiverSectionProps> = ({
         }
       />
 
-      {hasAnyMissionsForSelectedDate ? <TetrisGrid items={gridItems} /> : null}
+      <TetrisGrid items={gridItems} />
 
       {state.kind === 'returning' ? (
         <ReturningSection exampleMission={state.exampleMission} suggestion={state.suggestion} />
@@ -220,7 +201,7 @@ export const HomeGiverSection: React.FC<HomeGiverSectionProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    gap: theme.space.sm,
+    gap: theme.space.lg,
   },
   viewAllLabel: {
     color: theme.colors.primary,

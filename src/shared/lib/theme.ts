@@ -104,6 +104,9 @@ export const tokens = {
     targetMin: 44,
     hitSlop: 16,
   },
+  sizes: {
+    cardHeroMinHeight: 192,
+  },
 };
 
 export const theme = {
@@ -136,6 +139,7 @@ export const theme = {
   motion: tokens.motion,
   touch: tokens.touch,
   shadow: tokens.shadow,
+  sizes: tokens.sizes,
 };
 
 export type Theme = typeof theme;
