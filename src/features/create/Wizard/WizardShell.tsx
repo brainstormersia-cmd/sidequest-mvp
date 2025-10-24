@@ -3,8 +3,8 @@ import { View, ScrollView, Pressable, ActivityIndicator } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Text } from '../../../../shared/ui/Text';
-import { useTokens } from '../../../../shared/lib/theme';
+import { Text } from '../../../shared/ui/Text';
+import { useTokens } from '../../../shared/lib/theme';
 import { ProgressRing } from './components/ProgressRing';
 import { SummaryField, SummaryPeek } from './components/SummaryPeek';
 
