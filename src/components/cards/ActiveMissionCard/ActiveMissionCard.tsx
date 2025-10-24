@@ -186,20 +186,35 @@ export const ActiveMissionCard: React.FC<ActiveMissionCardProps> = React.memo(
         style={[styles.wrapper, animatedCardStyle]}
       >
         <LinearGradient
-          colors={['#020618', '#1C1F26']}
-          start={{ x: 0.5, y: 0 }}
-          end={{ x: 0.5, y: 1 }}
+          colors={['rgba(14,17,23,0.98)', 'rgba(26,32,44,0.9)']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
           style={styles.card}
         >
+          <View style={styles.cardBackdrop} pointerEvents="none" />
+          <LinearGradient
+            colors={['rgba(255,255,255,0.18)', 'rgba(255,255,255,0.04)']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.cardSheen}
+            pointerEvents="none"
+          />
+
           <Animated.View style={[styles.cardContent, { opacity: contentDriver }]}>
             <View style={styles.headlineRow}>
               <Text variant="lg" weight="bold" style={styles.statusHeadline} numberOfLines={1}>
                 {statusHeadlineLabel}
               </Text>
-              {timerLabel ? (
-                <Text variant="sm" style={styles.timerLabel} numberOfLines={1}>
-                  {timerLabel}
-                </Text>
+
+              {onPressChat ? (
+                <Pressable
+                  {...a11yButtonProps('Apri chat missione')}
+                  hitSlop={HITSLOP_44}
+                  onPress={handlePressChat}
+                  style={({ pressed }) => [styles.chatTouch, pressed ? styles.chatTouchPressed : null]}
+                >
+                  <ChatGlyph />
+                </Pressable>
               ) : null}
             </View>
 
@@ -222,6 +237,7 @@ export const ActiveMissionCard: React.FC<ActiveMissionCardProps> = React.memo(
               </View>
             </View>
 
+            {/* Progress block INSIDE the Animated.View */}
             <View style={styles.progressBlock}>
               <View style={styles.progressTrack} onLayout={handleTrackLayout}>
                 <Animated.View style={[styles.progressFill, progressStyle]} />
@@ -232,17 +248,6 @@ export const ActiveMissionCard: React.FC<ActiveMissionCardProps> = React.memo(
                 </Text>
               ) : null}
             </View>
-
-            {onPressChat ? (
-              <Pressable
-                {...a11yButtonProps('Apri chat missione')}
-                hitSlop={HITSLOP_44}
-                onPress={handlePressChat}
-                style={({ pressed }) => [styles.chatTouch, pressed ? styles.chatTouchPressed : null]}
-              >
-                <ChatGlyph />
-              </Pressable>
-            ) : null}
           </Animated.View>
         </LinearGradient>
       </AnimatedPressable>
@@ -254,34 +259,41 @@ ActiveMissionCard.displayName = 'ActiveMissionCard';
 
 const styles = StyleSheet.create({
   wrapper: {
-    borderRadius: theme.radius.xl,
+    borderRadius: theme.radius.lg,
     overflow: 'hidden',
-    backgroundColor: 'rgba(4,6,12,0.6)',
+    backgroundColor: 'rgba(10,12,18,0.44)',
     ...theme.shadow.soft,
     shadowColor: theme.shadow.medium.shadowColor,
     shadowOffset: theme.shadow.medium.shadowOffset,
-    shadowOpacity: Math.max(theme.shadow.medium.shadowOpacity, 0.35),
-    shadowRadius: theme.shadow.medium.shadowRadius + 8,
+    shadowOpacity: Math.max(theme.shadow.medium.shadowOpacity, 0.32),
+    shadowRadius: theme.shadow.medium.shadowRadius + 6,
   },
   card: {
-    borderRadius: theme.radius.xl,
-    paddingVertical: theme.space['3xl'],
+    borderRadius: theme.radius.lg,
+    paddingVertical: theme.space['2xl'],
     paddingHorizontal: theme.space['2xl'],
     overflow: 'hidden',
   },
+  cardBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(10,13,19,0.36)',
+  },
+  cardSheen: {
+    ...StyleSheet.absoluteFillObject,
+    opacity: 0.9,
+  },
   cardContent: {
-    gap: theme.space['2xl'],
-    alignItems: 'center',
+    gap: theme.space.lg,
   },
   headlineRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.space.xs,
+    justifyContent: 'space-between',
+    gap: theme.space.sm,
   },
   chatTouch: {
     borderRadius: theme.radius.full,
-    paddingVertical: theme.space.xs,
-    paddingHorizontal: theme.space.sm,
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    padding: theme.space.xs,
   },
   chatTouchPressed: {
     opacity: theme.opacity.pressed,
@@ -310,60 +322,48 @@ const styles = StyleSheet.create({
   },
   statusHeadline: {
     color: 'rgba(255,255,255,0.96)',
-    letterSpacing: 0.6,
-    fontSize: theme.typography.lg * 1.5,
-    lineHeight: theme.typography.lg * 1.62,
-    textAlign: 'center',
-  },
-  timerLabel: {
-    color: 'rgba(255,255,255,0.64)',
-    letterSpacing: 1.2,
-    textTransform: 'uppercase',
-    fontSize: theme.typography.xs * 0.95,
+    letterSpacing: 0.2,
+    fontSize: theme.typography.lg,
+    lineHeight: theme.typography.lg * 1.05,
   },
   identityRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.space.md,
+    gap: theme.space.lg,
   },
   avatar: {
-    width: theme.space['4xl'],
-    height: theme.space['4xl'],
+    width: theme.space['3xl'],
+    height: theme.space['3xl'],
     borderRadius: theme.radius.full,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.24)',
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    shadowColor: '#000',
-    shadowOpacity: 0.24,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 8 },
+    borderColor: 'rgba(255,255,255,0.18)',
+    backgroundColor: 'rgba(255,255,255,0.08)',
   },
   avatarText: {
     color: theme.colors.onPrimary,
   },
   identityText: {
+    flex: 1,
     gap: theme.space.xs,
-    alignItems: 'center',
   },
   doerName: {
     color: 'rgba(255,255,255,0.92)',
-    textAlign: 'center',
   },
   doerSummary: {
     color: 'rgba(255,255,255,0.7)',
-    textAlign: 'center',
   },
   progressBlock: {
+    flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.space.sm,
-    alignSelf: 'stretch',
+    gap: theme.space.md,
   },
   progressTrack: {
-    width: '100%',
-    height: 4,
+    flex: 1,
+    height: 7,
     borderRadius: theme.radius.full,
-    backgroundColor: 'rgba(255,255,255,0.12)',
+    backgroundColor: '#222832',
     overflow: 'hidden',
     position: 'relative',
   },
@@ -373,11 +373,12 @@ const styles = StyleSheet.create({
     top: 0,
     bottom: 0,
     borderRadius: theme.radius.full,
-    backgroundColor: '#4DD1FF',
+    backgroundColor: theme.colors.primary,
   },
   progressLabel: {
-    color: 'rgba(255,255,255,0.64)',
-    textAlign: 'center',
+    color: 'rgba(255,255,255,0.68)',
+    textAlign: 'right',
+    flexShrink: 0,
   },
 });
 
