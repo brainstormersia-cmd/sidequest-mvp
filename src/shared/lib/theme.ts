@@ -41,6 +41,9 @@ export const tokens = {
     '3xl': 40,
     '4xl': 48,
     '5xl': 64,
+    '6xl': 80,
+    '7xl': 112,
+    '8xl': 192,
   },
   radius: {
     none: 0,

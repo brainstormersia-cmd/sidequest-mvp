@@ -1,19 +1,13 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
-import * as Haptics from 'expo-haptics';
-import {
-  NewMissionSection,
-  ReturningSection,
-} from './components';
+import { StyleSheet, View } from 'react-native';
 import { theme } from '../../shared/lib/theme';
-import { ActiveMissionModel, GiverHomeState } from './useGiverHomeState';
 import { NewsPills } from '../../components/pills/NewsPills';
-import { EmptyMissionPlaceholderCard } from './EmptyMissionPlaceholderCard';
-import { CalendarPillsV2 } from '../../components/pills/CalendarPillsV2';
-import { TetrisGrid } from '../../components/grids/TetrisGrid';
-import { Text } from '../../shared/ui/Text';
-import { a11yButtonProps, HITSLOP_44 } from '../../shared/lib/a11y';
 import { ActiveMissionCard } from '../../components/cards/ActiveMissionCard';
+import { EmptyMissionPlaceholderCard } from './EmptyMissionPlaceholderCard';
+import { CalendarPillsV2 as CalendarStrip } from '../../components/pills/CalendarPillsV2';
+import { TetrisGrid as DashboardGrid } from '../../components/grids/TetrisGrid';
+import { ActiveMissionModel, GiverHomeState } from './useGiverHomeState';
+import { NewMissionSection, ReturningSection } from './components';
 
 export type HomeGiverSectionProps = {
   state: GiverHomeState;
@@ -34,20 +28,18 @@ export const HomeGiverSection: React.FC<HomeGiverSectionProps> = ({
   onViewAllActive,
   onOpenExamples,
 }) => {
+  const [selectedDate, setSelectedDate] = useState(new Date());
+
   const handleCreateMission = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => undefined);
     onCreateMission();
   }, [onCreateMission]);
 
   const handlePressRecentMission = useCallback(
     (missionId: string) => {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => undefined);
       onOpenRecentMission(missionId);
     },
     [onOpenRecentMission],
   );
-
-  const [selectedDate, setSelectedDate] = useState(new Date());
 
   const recentMissions =
     state.kind === 'active' || state.kind === 'recent' ? state.recentMissions : [];
@@ -71,7 +63,6 @@ export const HomeGiverSection: React.FC<HomeGiverSectionProps> = ({
     if (!activeMissionForSelectedDate) {
       return;
     }
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => undefined);
     onOpenActiveMission(activeMissionForSelectedDate);
   }, [activeMissionForSelectedDate, onOpenActiveMission]);
 
@@ -79,26 +70,19 @@ export const HomeGiverSection: React.FC<HomeGiverSectionProps> = ({
     if (!activeMissionForSelectedDate) {
       return;
     }
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => undefined);
     onOpenChat(activeMissionForSelectedDate.id);
   }, [activeMissionForSelectedDate, onOpenChat]);
 
-  const handleViewAllActive = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => undefined);
-    onViewAllActive();
-  }, [onViewAllActive]);
+  const handleOpenLatestMission = useCallback(() => {
+    const latest = recentMissions[0];
+    if (latest) {
+      handlePressRecentMission(latest.id);
+    }
+  }, [handlePressRecentMission, recentMissions]);
 
   const handleOpenExamplesPress = useCallback(() => {
     onOpenExamples();
   }, [onOpenExamples]);
-
-  const handleOpenLatestMission = useCallback(() => {
-    const latest = recentMissions[0];
-    if (!latest) {
-      return;
-    }
-    handlePressRecentMission(latest.id);
-  }, [handlePressRecentMission, recentMissions]);
 
   const handleOpenSuggestions = useCallback(() => {
     if (state.kind === 'new') {
@@ -111,16 +95,16 @@ export const HomeGiverSection: React.FC<HomeGiverSectionProps> = ({
   const newsItems = useMemo(
     () => [
       { id: 'news-1', title: 'Aggiornamento app', onPress: handleOpenExamplesPress },
-      { id: 'news-2', title: 'Statistiche settimanali', onPress: handleViewAllActive },
+      { id: 'news-2', title: 'Statistiche settimanali', onPress: onViewAllActive },
       { id: 'news-3', title: 'Crea una nuova missione', onPress: handleCreateMission },
     ],
-    [handleCreateMission, handleOpenExamplesPress, handleViewAllActive],
+    [handleCreateMission, handleOpenExamplesPress, onViewAllActive],
   );
 
   const gridItems = useMemo(
     () => [
       { id: 'grid-1', title: 'Tutorial', kind: 'large' as const, onPress: handleOpenExamplesPress },
-      { id: 'grid-2', title: 'Statistiche', kind: 'small' as const, onPress: handleViewAllActive },
+      { id: 'grid-2', title: 'Statistiche', kind: 'small' as const, onPress: onViewAllActive },
       { id: 'grid-3', title: 'Missioni recenti', kind: 'small' as const, onPress: handleOpenLatestMission },
       {
         id: 'grid-4',
@@ -129,18 +113,15 @@ export const HomeGiverSection: React.FC<HomeGiverSectionProps> = ({
         onPress: handleOpenSuggestions,
       },
     ],
-    [handleOpenExamplesPress, handleOpenLatestMission, handleOpenSuggestions, handleViewAllActive],
+    [handleOpenExamplesPress, handleOpenLatestMission, handleOpenSuggestions, onViewAllActive],
   );
 
-  const handleChangeCalendar = useCallback(
-    (date: Date) => {
-      setSelectedDate(date);
-    },
-    [setSelectedDate],
-  );
+  const handleChangeCalendar = useCallback((date: Date) => {
+    setSelectedDate(date);
+  }, []);
 
   return (
-    <View style={styles.container}>
+    <View style={styles.section}>
       <NewsPills items={newsItems} />
 
       {activeMissionForSelectedDate ? (
@@ -166,23 +147,9 @@ export const HomeGiverSection: React.FC<HomeGiverSectionProps> = ({
         />
       )}
 
-      <CalendarPillsV2
-        selectedDate={selectedDate}
-        onChange={handleChangeCalendar}
-        rightAccessory={
-          <Pressable
-            {...a11yButtonProps('Visualizza tutte')}
-            hitSlop={HITSLOP_44}
-            onPress={handleViewAllActive}
-          >
-            <Text variant="xs" weight="medium" style={styles.viewAllLabel}>
-              Visualizza tutte →
-            </Text>
-          </Pressable>
-        }
-      />
+      <CalendarStrip selectedDate={selectedDate} onChange={handleChangeCalendar} />
 
-      <TetrisGrid items={gridItems} />
+      <DashboardGrid items={gridItems} />
 
       {state.kind === 'returning' ? (
         <ReturningSection exampleMission={state.exampleMission} suggestion={state.suggestion} />
@@ -200,10 +167,9 @@ export const HomeGiverSection: React.FC<HomeGiverSectionProps> = ({
 };
 
 const styles = StyleSheet.create({
-  container: {
+  section: {
+    flex: 1,
     gap: theme.space.lg,
   },
-  viewAllLabel: {
-    color: theme.colors.primary,
-  },
 });
+

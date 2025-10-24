@@ -11,13 +11,16 @@ type Props = {
   cta?: string;
 };
 
+// Tokens / costanti (no px fissi)
 const verticalPadding = theme.space['2xl'];
 const horizontalPadding = theme.space['2xl'];
 const circleSize = Math.round(theme.space['3xl'] * 1.2);
 const borderThickness = theme.space.xxs / 2 + 1;
 const centerGap = theme.space.xs;
 
-const CARD_MIN_HEIGHT = theme.sizes?.cardHeroMinHeight ?? theme.space['5xl'];
+// Altezza minima condivisa con la hero card
+const CARD_MIN_HEIGHT =
+  (theme as any)?.sizes?.cardHeroMinHeight ?? theme.space['8xl'];
 
 export const EmptyMissionPlaceholderCard = memo(
   ({
@@ -35,7 +38,7 @@ export const EmptyMissionPlaceholderCard = memo(
         style={({ pressed }) => [styles.wrapper, pressed && styles.wrapperPressed]}
       >
         <LinearGradient
-          colors={[theme.colors.surface, theme.colors.background]}
+          colors={['#FFFFFF', '#F2F2F2']}
           start={{ x: 0, y: 0 }}
           end={{ x: 0, y: 1 }}
           style={styles.gradient}
@@ -65,6 +68,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     backgroundColor: theme.colors.surface,
     ...theme.shadow.soft,
+    shadowOpacity: 0.06,
   },
   wrapperPressed: {
     opacity: theme.opacity.pressed,
