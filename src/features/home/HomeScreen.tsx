@@ -66,6 +66,7 @@ export const HomeScreen = () => {
     openSheet(CreateMissionSheet, undefined, {
       title: 'Nuova missione',
       accessibilityLabel: 'Nuova missione',
+      size: 'full',
     });
   }, [openSheet]);
 

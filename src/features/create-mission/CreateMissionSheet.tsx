@@ -213,7 +213,11 @@ const CreateMissionWizard = ({ closeSheet }: Props) => {
   );
 
   if (loadingDraft) {
-    return <ActivityIndicator />;
+    return (
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+        <ActivityIndicator />
+      </View>
+    );
   }
 
   const secondaryAction = stepIndex === stepDefinitions.length - 1

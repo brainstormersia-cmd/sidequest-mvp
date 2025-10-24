@@ -53,6 +53,7 @@ export const ModalSheetProvider = ({ children }: { children: ReactNode }) => {
           presentation={options?.presentation}
           accessibilityLabel={options?.accessibilityLabel}
           title={options?.title}
+          size={options?.size}
         >
           <Component {...props} closeSheet={closeSheet} />
         </Sheet>
