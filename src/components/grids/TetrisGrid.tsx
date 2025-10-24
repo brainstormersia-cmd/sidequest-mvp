@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { memo, useMemo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Text } from '../../shared/ui/Text';
 import { theme } from '../../shared/lib/theme';
@@ -15,57 +15,53 @@ type Props = {
   items: Tile[];
 };
 
-const gridPadding = theme.space.md;
-const gridGap = theme.space.md;
+const padding = theme.space.sm;
+const gap = theme.space.xs;
 const tilePadding = theme.space.lg;
-const largeHeight = theme.space['5xl'] * 3;
-const mediumHeight = theme.space['5xl'] * 2.5;
-const smallHeight = theme.space['4xl'] * 2;
-
-const TileView = ({ tile }: { tile?: Tile }) => {
-  if (!tile) {
-    return <View style={[styles.tile, styles.tilePlaceholder]} />;
-  }
-
-  return (
-    <Pressable
-      {...a11yButtonProps(tile.title)}
-      hitSlop={HITSLOP_44}
-      onPress={tile.onPress}
-      style={({ pressed }) => [
-        styles.tile,
-        tile.kind === 'large' ? styles.largeTile : null,
-        tile.kind === 'medium' ? styles.mediumTile : null,
-        tile.kind === 'small' ? styles.smallTile : null,
-        pressed ? styles.tilePressed : null,
-      ]}
-    >
-      <Text variant="md" weight="bold" style={styles.tileTitle}>
-        {tile.title}
-      </Text>
-    </Pressable>
-  );
-};
+const tileMinHeight = theme.space['4xl'] * 2;
+const largeMinHeight = theme.space['5xl'] * 2;
 
 export const TetrisGrid = memo(({ items }: Props) => {
-  const large = items.find((item) => item.kind === 'large');
-  const smallTiles = items.filter((item) => item.kind === 'small');
-  const medium = items.find((item) => item.kind === 'medium');
+  const layout = useMemo(() => {
+    const large = items.find((item) => item.kind === 'large');
+    const smallTiles = items.filter((item) => item.kind === 'small');
+    const medium = items.find((item) => item.kind === 'medium');
+    return { large, smallTiles, medium };
+  }, [items]);
+
+  const renderTile = (tile?: Tile) => {
+    if (!tile) {
+      return <View style={[styles.tile, styles.tilePlaceholder]} />;
+    }
+
+    return (
+      <Pressable
+        {...a11yButtonProps(tile.title)}
+        hitSlop={HITSLOP_44}
+        onPress={tile.onPress}
+        style={({ pressed }) => [
+          styles.tile,
+          styles[tile.kind],
+          pressed ? styles.tilePressed : null,
+        ]}
+      >
+        <Text variant="md" weight="bold" style={styles.tileTitle}>
+          {tile.title}
+        </Text>
+      </Pressable>
+    );
+  };
 
   return (
     <View style={styles.container}>
       <View style={styles.topRow}>
-        <View style={styles.leftColumn}>
-          <TileView tile={large} />
-        </View>
+        <View style={styles.leftColumn}>{renderTile(layout.large)}</View>
         <View style={styles.rightColumn}>
-          <TileView tile={smallTiles[0]} />
-          <TileView tile={smallTiles[1]} />
+          {renderTile(layout.smallTiles[0])}
+          {renderTile(layout.smallTiles[1])}
         </View>
       </View>
-      <View style={styles.bottomRow}>
-        <TileView tile={medium} />
-      </View>
+      <View style={styles.bottomRow}>{renderTile(layout.medium)}</View>
     </View>
   );
 });
@@ -74,32 +70,42 @@ TetrisGrid.displayName = 'TetrisGrid';
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: gridPadding,
-    gap: gridGap,
+    paddingHorizontal: padding,
+    gap,
   },
   topRow: {
     flexDirection: 'row',
-    gap: gridGap,
+    gap,
   },
   leftColumn: {
     flex: 1.2,
   },
   rightColumn: {
     flex: 1,
-    gap: gridGap,
+    gap,
   },
   bottomRow: {
-    marginTop: gridGap,
+    marginTop: gap,
   },
   tile: {
+    flex: 1,
     borderRadius: theme.radius.xl,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.border,
     backgroundColor: theme.colors.surface,
     padding: tilePadding,
     justifyContent: 'flex-end',
-    minHeight: mediumHeight,
+    minHeight: tileMinHeight,
     ...theme.shadow.soft,
+  },
+  large: {
+    minHeight: largeMinHeight,
+  },
+  medium: {
+    minHeight: tileMinHeight,
+  },
+  small: {
+    minHeight: tileMinHeight,
   },
   tilePressed: {
     opacity: theme.opacity.pressed,
@@ -107,17 +113,7 @@ const styles = StyleSheet.create({
   tileTitle: {
     color: theme.colors.textPrimary,
   },
-  largeTile: {
-    minHeight: largeHeight,
-  },
-  mediumTile: {
-    minHeight: mediumHeight,
-  },
-  smallTile: {
-    minHeight: smallHeight,
-  },
   tilePlaceholder: {
     opacity: 0,
   },
 });
-

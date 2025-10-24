@@ -1,18 +1,19 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import {
   ActiveMissionSection,
   NewMissionSection,
-  RecentMissionsSection,
   ReturningSection,
 } from './components';
 import { theme } from '../../shared/lib/theme';
 import { ActiveMissionModel, GiverHomeState } from './useGiverHomeState';
 import { NewsPills } from '../../components/pills/NewsPills';
 import { EmptyMissionPlaceholderCard } from '../../components/cards/EmptyMissionPlaceholderCard';
-import { CalendarPills } from '../../components/pills/CalendarPills';
+import { CalendarPillsV2 } from '../../components/pills/CalendarPillsV2';
 import { TetrisGrid } from '../../components/grids/TetrisGrid';
+import { Text } from '../../shared/ui/Text';
+import { a11yButtonProps, HITSLOP_44 } from '../../shared/lib/a11y';
 
 export type HomeGiverSectionProps = {
   state: GiverHomeState;
@@ -22,7 +23,6 @@ export type HomeGiverSectionProps = {
   onOpenChat: (missionId: string) => void;
   onViewAllActive: () => void;
   onOpenExamples: () => void;
-  onLongPressRecent: (missionId: string) => void;
 };
 
 export const HomeGiverSection: React.FC<HomeGiverSectionProps> = ({
@@ -33,7 +33,6 @@ export const HomeGiverSection: React.FC<HomeGiverSectionProps> = ({
   onOpenChat,
   onViewAllActive,
   onOpenExamples,
-  onLongPressRecent,
 }) => {
   const handleCreateMission = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => undefined);
@@ -46,14 +45,6 @@ export const HomeGiverSection: React.FC<HomeGiverSectionProps> = ({
       onOpenRecentMission(missionId);
     },
     [onOpenRecentMission],
-  );
-
-  const handleLongPressRecent = useCallback(
-    (missionId: string) => {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => undefined);
-      onLongPressRecent(missionId);
-    },
-    [onLongPressRecent],
   );
 
   const activeMission = state.kind === 'active' ? state.activeMission : null;
@@ -119,14 +110,29 @@ export const HomeGiverSection: React.FC<HomeGiverSectionProps> = ({
     [handleCreateMission, handleOpenExamplesPress, handleViewAllActive],
   );
 
-  const gridItems = useMemo(
-    () => [
-      { id: 'grid-1', title: 'Tutorial', kind: 'large' as const, onPress: handleOpenExamplesPress },
-      { id: 'grid-2', title: 'Statistiche', kind: 'small' as const, onPress: handleViewAllActive },
-      { id: 'grid-3', title: 'Missioni recenti', kind: 'small' as const, onPress: handleOpenLatestMission },
-      { id: 'grid-4', title: 'Suggeriti per te', kind: 'medium' as const, onPress: handleOpenSuggestions },
-    ],
+  const selectHomeSectionsByDate = useCallback(
+    (date: Date) => {
+      const dayIndex = date.getDate();
+      const isEvenDay = dayIndex % 2 === 0;
+
+      return [
+        { id: 'grid-1', title: 'Tutorial', kind: 'large' as const, onPress: handleOpenExamplesPress },
+        { id: 'grid-2', title: 'Statistiche', kind: 'small' as const, onPress: handleViewAllActive },
+        { id: 'grid-3', title: 'Missioni recenti', kind: 'small' as const, onPress: handleOpenLatestMission },
+        {
+          id: 'grid-4',
+          title: isEvenDay ? 'Consigliati oggi' : 'Suggeriti per te',
+          kind: 'medium' as const,
+          onPress: handleOpenSuggestions,
+        },
+      ];
+    },
     [handleOpenExamplesPress, handleOpenLatestMission, handleOpenSuggestions, handleViewAllActive],
+  );
+
+  const gridItems = useMemo(
+    () => selectHomeSectionsByDate(selectedDate),
+    [selectHomeSectionsByDate, selectedDate],
   );
 
   const handleChangeCalendar = useCallback((date: Date) => {
@@ -148,19 +154,23 @@ export const HomeGiverSection: React.FC<HomeGiverSectionProps> = ({
 
       {showEmptyPlaceholder ? <EmptyMissionPlaceholderCard onCreate={handleCreateMission} /> : null}
 
-      <CalendarPills selectedDate={selectedDate} onChange={handleChangeCalendar} />
+      <CalendarPillsV2
+        selectedDate={selectedDate}
+        onChange={handleChangeCalendar}
+        rightAccessory={
+          <Pressable
+            {...a11yButtonProps('Visualizza tutte')}
+            hitSlop={HITSLOP_44}
+            onPress={handleViewAllActive}
+          >
+            <Text variant="xs" weight="medium" style={styles.viewAllLabel}>
+              Visualizza tutte →
+            </Text>
+          </Pressable>
+        }
+      />
 
       <TetrisGrid items={gridItems} />
-
-      {state.kind === 'active' || state.kind === 'recent' ? (
-        <RecentMissionsSection
-          missions={state.recentMissions}
-          stats={state.stats}
-          suggestion={state.suggestion}
-          onPressMission={handlePressRecentMission}
-          onLongPressMission={handleLongPressRecent}
-        />
-      ) : null}
 
       {state.kind === 'returning' ? (
         <ReturningSection exampleMission={state.exampleMission} suggestion={state.suggestion} />
@@ -180,5 +190,8 @@ export const HomeGiverSection: React.FC<HomeGiverSectionProps> = ({
 const styles = StyleSheet.create({
   container: {
     gap: theme.space.lg,
+  },
+  viewAllLabel: {
+    color: theme.colors.primary,
   },
 });
