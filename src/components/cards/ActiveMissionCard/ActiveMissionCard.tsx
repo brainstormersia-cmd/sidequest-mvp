@@ -18,9 +18,7 @@ import { useReduceMotion } from './ActiveMissionCard.anim';
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 const clampProgress = (value: number) => {
-  if (Number.isNaN(value)) {
-    return 0;
-  }
+  if (Number.isNaN(value)) return 0;
   return Math.max(0, Math.min(1, value));
 };
 
@@ -65,9 +63,7 @@ export const ActiveMissionCard: React.FC<ActiveMissionCardProps> = React.memo(
 
     useEffect(() => {
       const target = trackWidth * clampProgress(progress);
-      if (!trackWidth) {
-        return;
-      }
+      if (!trackWidth) return;
       if (reduceMotion) {
         progressDriver.setValue(target);
         return;
@@ -76,7 +72,7 @@ export const ActiveMissionCard: React.FC<ActiveMissionCardProps> = React.memo(
         toValue: target,
         duration: 250,
         easing: Easing.out(Easing.cubic),
-        useNativeDriver: false,
+        useNativeDriver: false, // width non supporta native driver
       }).start();
     }, [progress, progressDriver, reduceMotion, trackWidth]);
 
@@ -151,21 +147,13 @@ export const ActiveMissionCard: React.FC<ActiveMissionCardProps> = React.memo(
     );
 
     const progressStyle = useMemo(() => {
-      if (!trackWidth) {
-        return { width: 0 };
-      }
-      return {
-        width: progressDriver,
-      } as const;
+      if (!trackWidth) return { width: 0 };
+      return { width: progressDriver } as const; // Animated.Value OK
     }, [progressDriver, trackWidth]);
 
     const timerLabel = useMemo(() => {
-      if (!etaLabel) {
-        return '';
-      }
-      if (!etaSubLabel) {
-        return etaLabel;
-      }
+      if (!etaLabel) return '';
+      if (!etaSubLabel) return etaLabel;
       return `${etaLabel} ${etaSubLabel}`;
     }, [etaLabel, etaSubLabel]);
 
@@ -175,23 +163,14 @@ export const ActiveMissionCard: React.FC<ActiveMissionCardProps> = React.memo(
       [trimmedStatusLabel],
     );
     const statusHeadlineLabel = useMemo(() => toTitleCase(cleanedStatusLabel), [cleanedStatusLabel]);
+
     const cardAccessibilityLabel = useMemo(() => {
       const segments: string[] = [];
-      if (statusHeadlineLabel) {
-        segments.push(statusHeadlineLabel);
-      }
-      if (title) {
-        segments.push(`Doer ${title}`);
-      }
-      if (subtitle) {
-        segments.push(subtitle);
-      }
-      if (progressLabel) {
-        segments.push(`Progresso ${progressLabel}`);
-      }
-      if (timerLabel) {
-        segments.push(`Arrivo previsto ${timerLabel}`);
-      }
+      if (statusHeadlineLabel) segments.push(statusHeadlineLabel);
+      if (title) segments.push(`Doer ${title}`);
+      if (subtitle) segments.push(subtitle);
+      if (progressLabel) segments.push(`Progresso ${progressLabel}`);
+      if (timerLabel) segments.push(`Arrivo previsto ${timerLabel}`);
       return segments.join(', ');
     }, [progressLabel, statusHeadlineLabel, subtitle, timerLabel, title]);
 
@@ -220,11 +199,13 @@ export const ActiveMissionCard: React.FC<ActiveMissionCardProps> = React.memo(
             style={styles.cardSheen}
             pointerEvents="none"
           />
+
           <Animated.View style={[styles.cardContent, { opacity: contentDriver }]}>
             <View style={styles.headlineRow}>
               <Text variant="lg" weight="bold" style={styles.statusHeadline} numberOfLines={1}>
                 {statusHeadlineLabel}
               </Text>
+
               {onPressChat ? (
                 <Pressable
                   {...a11yButtonProps('Apri chat missione')}
@@ -245,6 +226,7 @@ export const ActiveMissionCard: React.FC<ActiveMissionCardProps> = React.memo(
                   </Text>
                 </View>
               ) : null}
+
               <View style={styles.identityText}>
                 <Text variant="md" weight="bold" style={styles.doerName} numberOfLines={1}>
                   {title}
@@ -254,8 +236,8 @@ export const ActiveMissionCard: React.FC<ActiveMissionCardProps> = React.memo(
                 </Text>
               </View>
             </View>
-          </View>
 
+            {/* Progress block INSIDE the Animated.View */}
             <View style={styles.progressBlock}>
               <View style={styles.progressTrack} onLayout={handleTrackLayout}>
                 <Animated.View style={[styles.progressFill, progressStyle]} />
@@ -399,3 +381,4 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
 });
+
