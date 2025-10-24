@@ -11,10 +11,11 @@ type Props = {
   cta?: string;
 };
 
-const verticalPadding = theme.space.lg;
+const verticalPadding = theme.space['2xl'];
+const horizontalPadding = theme.space['2xl'];
 const circleSize = theme.space['3xl'];
 const borderThickness = theme.space.xxs / 2;
-const gap = theme.space.sm - theme.space.xxs;
+const gap = theme.space.lg;
 
 export const EmptyMissionPlaceholderCard = memo(
   ({
@@ -22,53 +23,57 @@ export const EmptyMissionPlaceholderCard = memo(
     title = 'Non hai ancora programmato nulla',
     cta = 'Aggiungi missione',
   }: Props) => {
-  return (
-    <Pressable
-      {...a11yButtonProps(cta)}
-      hitSlop={HITSLOP_44}
-      onPress={onCreate}
-      style={({ pressed }) => [styles.wrapper, pressed ? styles.wrapperPressed : null]}
-    >
-      <LinearGradient
-        colors={[theme.colors.surfaceAlt, theme.colors.background]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.gradient}
+    const label = cta ?? title;
+
+    return (
+      <Pressable
+        {...a11yButtonProps(label)}
+        hitSlop={HITSLOP_44}
+        onPress={onCreate}
+        style={({ pressed }) => [styles.wrapper, pressed ? styles.wrapperPressed : null]}
       >
-        <View style={styles.center}>
-          <View style={styles.circle}>
-            <Text variant="lg" weight="bold" style={styles.plus}>
-              +
+        <LinearGradient
+          colors={[theme.colors.background, theme.colors.surface]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.gradient}
+        >
+          <View style={styles.center}>
+            <View style={styles.circle}>
+              <Text variant="lg" weight="bold" style={styles.plus}>
+                +
+              </Text>
+            </View>
+            <Text variant="sm" weight="medium" style={styles.title}>
+              {cta ? `${title} · ${cta}` : title}
             </Text>
           </View>
-          <Text variant="sm" weight="medium" style={styles.title}>
-            {title}
-          </Text>
-          <Text variant="sm" weight="medium" style={styles.cta}>
-            {cta}
-          </Text>
-        </View>
-      </LinearGradient>
-    </Pressable>
-  );
-});
+        </LinearGradient>
+      </Pressable>
+    );
+  },
+);
 
 EmptyMissionPlaceholderCard.displayName = 'EmptyMissionPlaceholderCard';
 
 const styles = StyleSheet.create({
   wrapper: {
-    borderRadius: theme.radius.xl,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.border,
+    borderRadius: theme.radius.lg,
     overflow: 'hidden',
     backgroundColor: theme.colors.surface,
+    ...theme.shadow.soft,
+    shadowColor: 'rgba(15, 17, 23, 0.18)',
+    shadowOpacity: 1,
+    shadowRadius: Math.max(theme.shadow.soft.shadowRadius - 8, 12),
   },
   wrapperPressed: {
     opacity: theme.opacity.pressed,
   },
   gradient: {
+    paddingHorizontal: horizontalPadding,
     paddingVertical: verticalPadding,
     justifyContent: 'center',
+    gap,
   },
   center: {
     alignItems: 'center',
@@ -90,10 +95,7 @@ const styles = StyleSheet.create({
   },
   title: {
     color: theme.colors.textSecondary,
-    opacity: theme.opacity.pressed,
-  },
-  cta: {
-    color: theme.colors.textSubtle,
+    textAlign: 'center',
   },
 });
 
