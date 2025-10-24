@@ -23,7 +23,8 @@ import { HomeDoerSection } from './HomeDoerSection';
 import { HomeGiverSection } from './HomeGiverSection';
 import { HomeHeader } from './components';
 import { a11yButtonProps, HITSLOP_44 } from '../../shared/lib/a11y';
-import { useGiverHomeState } from './useGiverHomeState';
+import { ActiveMissionModel, useGiverHomeState } from './useGiverHomeState';
+import { useReduceMotion } from '../../components/cards/ActiveMissionCard/ActiveMissionCard.anim';
 import * as Haptics from 'expo-haptics';
 
 export const HomeScreen = () => {
@@ -32,6 +33,8 @@ export const HomeScreen = () => {
   const { role, setRole } = useRole();
   const giverState = useGiverHomeState();
   const stickyCta = useRef(new Animated.Value(role === 'giver' ? 1 : 0)).current;
+  const shimmerDriver = useRef(new Animated.Value(-1)).current;
+  const reduceMotion = useReduceMotion();
 
   const headerCopy = useMemo(
     () =>
@@ -66,7 +69,14 @@ export const HomeScreen = () => {
     openCreateMissionSheet();
   }, [openCreateMissionSheet]);
 
-  const handleOpenMission = React.useCallback(
+  const handleOpenActiveMission = React.useCallback(
+    (mission: ActiveMissionModel) => {
+      navigation.navigate('MissionSummary', { mission });
+    },
+    [navigation],
+  );
+
+  const handleOpenRecentMission = React.useCallback(
     (_missionId: string) => {
       navigation.navigate('Missions');
     },
@@ -112,6 +122,36 @@ export const HomeScreen = () => {
     }).start();
   }, [role, stickyCta]);
 
+  useEffect(() => {
+    if (role !== 'giver' || reduceMotion) {
+      shimmerDriver.setValue(-1);
+      return;
+    }
+
+    const animation = Animated.loop(
+      Animated.sequence([
+        Animated.delay(10000),
+        Animated.timing(shimmerDriver, {
+          toValue: 1,
+          duration: 900,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.timing(shimmerDriver, {
+          toValue: -1,
+          duration: 0,
+          useNativeDriver: true,
+        }),
+      ]),
+    );
+
+    animation.start();
+
+    return () => {
+      animation.stop();
+    };
+  }, [reduceMotion, role, shimmerDriver]);
+
   const stickyCtaStyle = React.useMemo(
     () => ({
       opacity: stickyCta,
@@ -125,6 +165,24 @@ export const HomeScreen = () => {
       ],
     }),
     [stickyCta],
+  );
+
+  const shimmerStyle = useMemo(
+    () => ({
+      opacity: shimmerDriver.interpolate({
+        inputRange: [-1, -0.2, 0, 0.2, 1],
+        outputRange: [0, 0, 0.35, 0, 0],
+      }),
+      transform: [
+        {
+          translateX: shimmerDriver.interpolate({
+            inputRange: [-1, 1],
+            outputRange: [-160, 160],
+          }),
+        },
+      ],
+    }),
+    [shimmerDriver],
   );
 
   return (
@@ -191,7 +249,8 @@ export const HomeScreen = () => {
             <HomeGiverSection
               state={giverState}
               onCreateMission={openCreateMissionSheet}
-              onOpenMission={handleOpenMission}
+              onOpenActiveMission={handleOpenActiveMission}
+              onOpenRecentMission={handleOpenRecentMission}
               onOpenChat={handleOpenChat}
               onViewAllActive={handleViewAllActive}
               onOpenExamples={handleOpenExamples}
@@ -213,6 +272,7 @@ export const HomeScreen = () => {
               <Text variant="md" weight="bold" style={styles.stickyCtaLabel}>
                 + Crea missione
               </Text>
+              <Animated.View pointerEvents="none" style={[styles.stickyCtaShimmer, shimmerStyle]} />
             </Pressable>
           </Animated.View>
         ) : null}
@@ -289,27 +349,33 @@ const styles = StyleSheet.create({
   },
   stickyCtaContainer: {
     marginTop: theme.spacing.lg,
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.radius.lg,
-    padding: theme.spacing.sm,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    shadowColor: '#0B0C0E14',
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: theme.elevation.level1,
+    paddingHorizontal: theme.spacing.xs,
   },
   stickyCta: {
     minHeight: theme.touch.targetMin,
-    borderRadius: theme.radius.md,
+    borderRadius: theme.radius.full,
     backgroundColor: theme.colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: theme.spacing['2xl'],
+    overflow: 'hidden',
+    ...theme.shadow.soft,
   },
   stickyCtaPressed: {
     opacity: theme.opacity.pressed,
+    transform: [{ scale: 0.97 }],
   },
   stickyCtaLabel: {
     color: theme.colors.onPrimary,
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+  },
+  stickyCtaShimmer: {
+    position: 'absolute',
+    top: -theme.spacing['2xl'],
+    bottom: -theme.spacing['2xl'],
+    width: theme.spacing['3xl'],
+    borderRadius: theme.radius.full,
+    backgroundColor: 'rgba(255,255,255,0.45)',
   },
 });

@@ -13,7 +13,8 @@ export const Text = ({ children, variant = 'sm', weight = 'regular', style, ...r
   return (
     <RNText
       accessibilityRole={rest.accessibilityRole}
-      maxFontSizeMultiplier={1.3}
+      allowFontScaling={false}
+      maxFontSizeMultiplier={1.0}
       style={[styles.base, styles[variant], styles[weight], style]}
       {...rest}
     >
@@ -25,6 +26,8 @@ export const Text = ({ children, variant = 'sm', weight = 'regular', style, ...r
 const styles = StyleSheet.create({
   base: {
     color: theme.colors.textPrimary,
+    textAlignVertical: 'center',
+    includeFontPadding: false,
   },
   xs: {
     fontSize: theme.typography.xs,
