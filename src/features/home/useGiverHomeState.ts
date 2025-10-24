@@ -54,6 +54,18 @@ export type SuggestionModel = {
   copy: string;
 };
 
+type CalendarMissionStatus = 'active' | 'draft' | 'scheduled';
+
+type CalendarMissionSummary = {
+  id: string;
+  status: CalendarMissionStatus;
+};
+
+type CalendarSelectorState = {
+  selectMissionsByDate: (date: Date) => CalendarMissionSummary[];
+  selectActiveMissionByDate: (date: Date) => ActiveMissionModel | null;
+};
+
 export type ExampleMissionModel = {
   title: string;
   amount: string;
@@ -144,8 +156,80 @@ const buildStateFromPayload = (payload: RawHomePayload): GiverHomeState => {
   };
 };
 
+const withCalendarSelectors = <T extends GiverHomeState>(state: T): T & CalendarSelectorState => {
+  const today = new Date();
+  const startOfDay = (date: Date) => new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const calendarDayKey = (date: Date) => startOfDay(date).getTime();
+  const createDayFromToday = (offset: number) =>
+    new Date(today.getFullYear(), today.getMonth(), today.getDate() + offset);
+
+  const calendarEntries = new Map<number, CalendarMissionSummary[]>();
+
+  const registerMission = (date: Date, mission: CalendarMissionSummary) => {
+    const key = calendarDayKey(date);
+    const existing = calendarEntries.get(key);
+    if (existing) {
+      existing.push(mission);
+      return;
+    }
+    calendarEntries.set(key, [mission]);
+  };
+
+  if (state.kind === 'active') {
+    registerMission(createDayFromToday(0), {
+      id: state.activeMission.id,
+      status: 'active',
+    });
+  }
+
+  if ('recentMissions' in state) {
+    const draftMission = state.recentMissions.find((mission) => mission.status === 'draft');
+    if (draftMission) {
+      registerMission(createDayFromToday(2), {
+        id: draftMission.id,
+        status: 'draft',
+      });
+    }
+
+    const scheduledSource = state.recentMissions.find((mission) => mission.status !== 'draft');
+    if (scheduledSource) {
+      registerMission(createDayFromToday(4), {
+        id: scheduledSource.id,
+        status: 'scheduled',
+      });
+    }
+  }
+
+  const selectMissionsByDate = (date: Date): CalendarMissionSummary[] => {
+    const key = calendarDayKey(date);
+    const missions = calendarEntries.get(key);
+    return missions ? [...missions] : [];
+  };
+
+  const selectActiveMissionByDate = (date: Date): ActiveMissionModel | null => {
+    if (state.kind !== 'active') {
+      return null;
+    }
+
+    const key = calendarDayKey(date);
+    const missions = calendarEntries.get(key);
+    if (!missions) {
+      return null;
+    }
+
+    const hasActiveMission = missions.some((mission) => mission.id === state.activeMission.id);
+    return hasActiveMission ? state.activeMission : null;
+  };
+
+  return {
+    ...state,
+    selectMissionsByDate,
+    selectActiveMissionByDate,
+  };
+};
+
 export const useGiverHomeState = () => {
-  return useMemo<GiverHomeState>(() => {
+  return useMemo<GiverHomeState & CalendarSelectorState>(() => {
     const payload: RawHomePayload = {
       header: {
         variant: 'geolocated',
@@ -222,7 +306,9 @@ export const useGiverHomeState = () => {
       },
     };
 
-    return buildStateFromPayload(payload);
+    const state = buildStateFromPayload(payload);
+
+    return withCalendarSelectors(state);
   }, []);
 };
 

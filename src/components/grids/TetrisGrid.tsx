@@ -17,7 +17,7 @@ type Props = {
 
 const horizontalPadding = theme.space.md;
 const gap = theme.space.xs;
-const tilePadding = theme.space.lg;
+const tilePadding = theme.space.md;
 const tileMinHeight = theme.space['4xl'] * 2;
 const largeMinHeight = theme.space['5xl'] * 2;
 
@@ -97,9 +97,12 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     minHeight: tileMinHeight,
     shadowColor: theme.shadow.soft.shadowColor,
-    shadowOffset: theme.shadow.soft.shadowOffset,
-    shadowOpacity: theme.shadow.soft.shadowOpacity,
-    shadowRadius: theme.shadow.soft.shadowRadius,
+    shadowOffset: {
+      width: theme.space.none,
+      height: theme.space.xs,
+    },
+    shadowOpacity: theme.opacity.overlay,
+    shadowRadius: theme.space.sm,
     elevation: theme.elevation.level0,
   },
   large: {

@@ -12,6 +12,7 @@ type Props = {
 };
 
 const verticalPadding = theme.space.lg;
+const horizontalPadding = theme.space.lg;
 const circleSize = theme.space['3xl'];
 const borderThickness = theme.space.xxs / 2;
 const gap = theme.space.sm - theme.space.xxs;
@@ -22,36 +23,36 @@ export const EmptyMissionPlaceholderCard = memo(
     title = 'Non hai ancora programmato nulla',
     cta = 'Aggiungi missione',
   }: Props) => {
-  return (
-    <Pressable
-      {...a11yButtonProps(cta)}
-      hitSlop={HITSLOP_44}
-      onPress={onCreate}
-      style={({ pressed }) => [styles.wrapper, pressed ? styles.wrapperPressed : null]}
-    >
-      <LinearGradient
-        colors={[theme.colors.surfaceAlt, theme.colors.background]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.gradient}
+    const label = cta ?? title;
+
+    return (
+      <Pressable
+        {...a11yButtonProps(label)}
+        hitSlop={HITSLOP_44}
+        onPress={onCreate}
+        style={({ pressed }) => [styles.wrapper, pressed ? styles.wrapperPressed : null]}
       >
-        <View style={styles.center}>
-          <View style={styles.circle}>
-            <Text variant="lg" weight="bold" style={styles.plus}>
-              +
+        <LinearGradient
+          colors={[theme.colors.background, theme.colors.surface]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.gradient}
+        >
+          <View style={styles.center}>
+            <View style={styles.circle}>
+              <Text variant="lg" weight="bold" style={styles.plus}>
+                +
+              </Text>
+            </View>
+            <Text variant="sm" weight="medium" style={styles.title}>
+              {cta ? `${title} · ${cta}` : title}
             </Text>
           </View>
-          <Text variant="sm" weight="medium" style={styles.title}>
-            {title}
-          </Text>
-          <Text variant="sm" weight="medium" style={styles.cta}>
-            {cta}
-          </Text>
-        </View>
-      </LinearGradient>
-    </Pressable>
-  );
-});
+        </LinearGradient>
+      </Pressable>
+    );
+  },
+);
 
 EmptyMissionPlaceholderCard.displayName = 'EmptyMissionPlaceholderCard';
 
@@ -59,7 +60,7 @@ const styles = StyleSheet.create({
   wrapper: {
     borderRadius: theme.radius.xl,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.border,
+    borderColor: theme.colors.borderMuted,
     overflow: 'hidden',
     backgroundColor: theme.colors.surface,
   },
@@ -67,6 +68,7 @@ const styles = StyleSheet.create({
     opacity: theme.opacity.pressed,
   },
   gradient: {
+    paddingHorizontal: horizontalPadding,
     paddingVertical: verticalPadding,
     justifyContent: 'center',
   },
@@ -90,10 +92,6 @@ const styles = StyleSheet.create({
   },
   title: {
     color: theme.colors.textSecondary,
-    opacity: theme.opacity.pressed,
-  },
-  cta: {
-    color: theme.colors.textSubtle,
   },
 });
 
