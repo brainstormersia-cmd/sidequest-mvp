@@ -73,6 +73,7 @@ const styles = StyleSheet.create({
   gradient: {
     paddingHorizontal: horizontalPadding,
     paddingVertical: verticalPadding,
+    minHeight,
     justifyContent: 'center',
   },
   center: {
