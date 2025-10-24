@@ -15,7 +15,7 @@ type Props = {
   items: Tile[];
 };
 
-const padding = theme.space.sm;
+const horizontalPadding = theme.space.md;
 const gap = theme.space.xs;
 const tilePadding = theme.space.lg;
 const tileMinHeight = theme.space['4xl'] * 2;
@@ -70,7 +70,7 @@ TetrisGrid.displayName = 'TetrisGrid';
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: padding,
+    paddingHorizontal: horizontalPadding,
     gap,
   },
   topRow: {
@@ -96,7 +96,11 @@ const styles = StyleSheet.create({
     padding: tilePadding,
     justifyContent: 'flex-end',
     minHeight: tileMinHeight,
-    ...theme.shadow.soft,
+    shadowColor: theme.shadow.soft.shadowColor,
+    shadowOffset: theme.shadow.soft.shadowOffset,
+    shadowOpacity: theme.shadow.soft.shadowOpacity,
+    shadowRadius: theme.shadow.soft.shadowRadius,
+    elevation: theme.elevation.level0,
   },
   large: {
     minHeight: largeMinHeight,

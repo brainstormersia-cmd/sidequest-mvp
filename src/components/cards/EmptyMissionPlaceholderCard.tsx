@@ -8,22 +8,29 @@ import { a11yButtonProps, HITSLOP_44 } from '../../shared/lib/a11y';
 type Props = {
   onCreate?: () => void;
   title?: string;
+  cta?: string;
 };
 
-const cardPadding = theme.space.lg;
+const verticalPadding = theme.space.lg;
 const circleSize = theme.space['3xl'];
-const gradientHeight = theme.space['5xl'] * 3;
+const borderThickness = theme.space.xxs / 2;
+const gap = theme.space.sm - theme.space.xxs;
 
-export const EmptyMissionPlaceholderCard = memo(({ onCreate, title = 'Aggiungi missione' }: Props) => {
+export const EmptyMissionPlaceholderCard = memo(
+  ({
+    onCreate,
+    title = 'Non hai ancora programmato nulla',
+    cta = 'Aggiungi missione',
+  }: Props) => {
   return (
     <Pressable
-      {...a11yButtonProps(title)}
+      {...a11yButtonProps(cta)}
       hitSlop={HITSLOP_44}
       onPress={onCreate}
       style={({ pressed }) => [styles.wrapper, pressed ? styles.wrapperPressed : null]}
     >
       <LinearGradient
-        colors={[theme.colors.surface, theme.colors.surfaceAlt]}
+        colors={[theme.colors.surfaceAlt, theme.colors.background]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.gradient}
@@ -34,8 +41,11 @@ export const EmptyMissionPlaceholderCard = memo(({ onCreate, title = 'Aggiungi m
               +
             </Text>
           </View>
-          <Text variant="sm" weight="medium" style={styles.caption}>
+          <Text variant="sm" weight="medium" style={styles.title}>
             {title}
+          </Text>
+          <Text variant="sm" weight="medium" style={styles.cta}>
+            {cta}
           </Text>
         </View>
       </LinearGradient>
@@ -57,30 +67,33 @@ const styles = StyleSheet.create({
     opacity: theme.opacity.pressed,
   },
   gradient: {
-    minHeight: gradientHeight,
+    paddingVertical: verticalPadding,
     justifyContent: 'center',
   },
   center: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: cardPadding,
-    gap: theme.space.sm,
+    gap,
   },
   circle: {
     width: circleSize,
     height: circleSize,
     borderRadius: theme.radius.full,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.border,
+    borderWidth: borderThickness,
+    borderColor: theme.colors.borderMuted,
     borderStyle: 'dashed',
     alignItems: 'center',
     justifyContent: 'center',
   },
   plus: {
-    color: theme.colors.background,
+    color: theme.colors.textSubtle,
   },
-  caption: {
+  title: {
     color: theme.colors.textSecondary,
+    opacity: theme.opacity.pressed,
+  },
+  cta: {
+    color: theme.colors.textSubtle,
   },
 });
 
