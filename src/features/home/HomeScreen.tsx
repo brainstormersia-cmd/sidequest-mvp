@@ -98,17 +98,6 @@ export const HomeScreen = () => {
     navigation.navigate('Missions');
   }, [navigation]);
 
-  const handleLongPressRecent = React.useCallback(
-    (missionId: string) => {
-      Alert.alert('Azioni missione', `Duplica o elimina la missione ${missionId}`, [
-        { text: 'Duplica', onPress: openCreateMissionSheet },
-        { text: 'Elimina', style: 'destructive' },
-        { text: 'Annulla', style: 'cancel' },
-      ]);
-    },
-    [openCreateMissionSheet],
-  );
-
   const handleSwitchRole = React.useCallback(() => {
     setRole(role === 'giver' ? 'doer' : 'giver');
   }, [role, setRole]);
@@ -254,7 +243,6 @@ export const HomeScreen = () => {
               onOpenChat={handleOpenChat}
               onViewAllActive={handleViewAllActive}
               onOpenExamples={handleOpenExamples}
-              onLongPressRecent={handleLongPressRecent}
             />
           )}
         </ScrollView>
