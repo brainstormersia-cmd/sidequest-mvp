@@ -11,11 +11,11 @@ type Props = {
   cta?: string;
 };
 
-const verticalPadding = theme.space.lg;
-const horizontalPadding = theme.space.lg;
+const verticalPadding = theme.space['2xl'];
+const horizontalPadding = theme.space['2xl'];
 const circleSize = theme.space['3xl'];
 const borderThickness = theme.space.xxs / 2;
-const gap = theme.space.sm - theme.space.xxs;
+const gap = theme.space.lg;
 
 export const EmptyMissionPlaceholderCard = memo(
   ({
@@ -58,11 +58,13 @@ EmptyMissionPlaceholderCard.displayName = 'EmptyMissionPlaceholderCard';
 
 const styles = StyleSheet.create({
   wrapper: {
-    borderRadius: theme.radius.xl,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderMuted,
+    borderRadius: theme.radius.lg,
     overflow: 'hidden',
     backgroundColor: theme.colors.surface,
+    ...theme.shadow.soft,
+    shadowColor: 'rgba(15, 17, 23, 0.18)',
+    shadowOpacity: 1,
+    shadowRadius: Math.max(theme.shadow.soft.shadowRadius - 8, 12),
   },
   wrapperPressed: {
     opacity: theme.opacity.pressed,
@@ -71,6 +73,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: horizontalPadding,
     paddingVertical: verticalPadding,
     justifyContent: 'center',
+    gap,
   },
   center: {
     alignItems: 'center',
@@ -92,6 +95,7 @@ const styles = StyleSheet.create({
   },
   title: {
     color: theme.colors.textSecondary,
+    textAlign: 'center',
   },
 });
 

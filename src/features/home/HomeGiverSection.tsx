@@ -181,7 +181,9 @@ export const HomeGiverSection: React.FC<HomeGiverSectionProps> = ({
           onPress={handlePressActiveMission}
           onPressChat={handlePressActiveChat}
         />
-      ) : null}
+      ) : (
+        <EmptyMissionPlaceholderCard onCreate={handleCreateMission} />
+      )}
 
       <CalendarPillsV2
         selectedDate={selectedDate}
@@ -199,11 +201,7 @@ export const HomeGiverSection: React.FC<HomeGiverSectionProps> = ({
         }
       />
 
-      {!hasAnyMissionsForSelectedDate ? (
-        <EmptyMissionPlaceholderCard onCreate={handleCreateMission} />
-      ) : (
-        <TetrisGrid items={gridItems} />
-      )}
+      {hasAnyMissionsForSelectedDate ? <TetrisGrid items={gridItems} /> : null}
 
       {state.kind === 'returning' ? (
         <ReturningSection exampleMission={state.exampleMission} suggestion={state.suggestion} />
