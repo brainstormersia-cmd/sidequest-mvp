@@ -13,9 +13,9 @@ type Props = {
 
 const verticalPadding = theme.space['2xl'];
 const horizontalPadding = theme.space['2xl'];
-const circleSize = theme.space['3xl'];
-const borderThickness = theme.space.xxs / 2;
-const gap = theme.space.lg;
+const circleSize = Math.round(theme.space['3xl'] * 1.2);
+const borderThickness = theme.space.xxs / 2 + 1;
+const centerGap = theme.space.xs;
 
 export const EmptyMissionPlaceholderCard = memo(
   ({
@@ -33,9 +33,9 @@ export const EmptyMissionPlaceholderCard = memo(
         style={({ pressed }) => [styles.wrapper, pressed ? styles.wrapperPressed : null]}
       >
         <LinearGradient
-          colors={[theme.colors.background, theme.colors.surface]}
+          colors={['#FFFFFF', '#F2F2F2']}
           start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
+          end={{ x: 0, y: 1 }}
           style={styles.gradient}
         >
           <View style={styles.center}>
@@ -44,7 +44,7 @@ export const EmptyMissionPlaceholderCard = memo(
                 +
               </Text>
             </View>
-            <Text variant="sm" weight="medium" style={styles.title}>
+            <Text variant="md" weight="medium" style={styles.title}>
               {cta ? `${title} · ${cta}` : title}
             </Text>
           </View>
@@ -62,9 +62,10 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     backgroundColor: theme.colors.surface,
     ...theme.shadow.soft,
-    shadowColor: 'rgba(15, 17, 23, 0.18)',
-    shadowOpacity: 1,
-    shadowRadius: Math.max(theme.shadow.soft.shadowRadius - 8, 12),
+    shadowColor: theme.shadow.soft.shadowColor,
+    shadowOffset: theme.shadow.soft.shadowOffset,
+    shadowOpacity: 0.06,
+    shadowRadius: theme.shadow.soft.shadowRadius,
   },
   wrapperPressed: {
     opacity: theme.opacity.pressed,
@@ -73,25 +74,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: horizontalPadding,
     paddingVertical: verticalPadding,
     justifyContent: 'center',
-    gap,
   },
   center: {
     alignItems: 'center',
     justifyContent: 'center',
-    gap,
+    gap: centerGap,
   },
   circle: {
     width: circleSize,
     height: circleSize,
     borderRadius: theme.radius.full,
     borderWidth: borderThickness,
-    borderColor: theme.colors.border,
+    borderColor: theme.colors.textSubtle,
     borderStyle: 'dashed',
     alignItems: 'center',
     justifyContent: 'center',
   },
   plus: {
-    color: theme.colors.border,
+    color: theme.colors.textSubtle,
   },
   title: {
     color: theme.colors.textSecondary,

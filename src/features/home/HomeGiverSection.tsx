@@ -133,29 +133,19 @@ export const HomeGiverSection: React.FC<HomeGiverSectionProps> = ({
     [handleCreateMission, handleOpenExamplesPress, handleViewAllActive],
   );
 
-  const selectHomeSectionsByDate = useCallback(
-    (date: Date) => {
-      const dayIndex = date.getDate();
-      const isEvenDay = dayIndex % 2 === 0;
-
-      return [
-        { id: 'grid-1', title: 'Tutorial', kind: 'large' as const, onPress: handleOpenExamplesPress },
-        { id: 'grid-2', title: 'Statistiche', kind: 'small' as const, onPress: handleViewAllActive },
-        { id: 'grid-3', title: 'Missioni recenti', kind: 'small' as const, onPress: handleOpenLatestMission },
-        {
-          id: 'grid-4',
-          title: isEvenDay ? 'Consigliati oggi' : 'Suggeriti per te',
-          kind: 'medium' as const,
-          onPress: handleOpenSuggestions,
-        },
-      ];
-    },
-    [handleOpenExamplesPress, handleOpenLatestMission, handleOpenSuggestions, handleViewAllActive],
-  );
-
   const gridItems = useMemo(
-    () => selectHomeSectionsByDate(selectedDate),
-    [selectHomeSectionsByDate, selectedDate],
+    () => [
+      { id: 'grid-1', title: 'Tutorial', kind: 'large' as const, onPress: handleOpenExamplesPress },
+      { id: 'grid-2', title: 'Statistiche', kind: 'small' as const, onPress: handleViewAllActive },
+      { id: 'grid-3', title: 'Missioni recenti', kind: 'small' as const, onPress: handleOpenLatestMission },
+      {
+        id: 'grid-4',
+        title: 'Suggeriti per te',
+        kind: 'medium' as const,
+        onPress: handleOpenSuggestions,
+      },
+    ],
+    [handleOpenExamplesPress, handleOpenLatestMission, handleOpenSuggestions, handleViewAllActive],
   );
 
   const handleChangeCalendar = useCallback((date: Date) => {
