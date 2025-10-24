@@ -1,14 +1,19 @@
-import React, { useCallback } from 'react';
-import { StyleSheet, View } from 'react-native';
+import React, { useCallback, useMemo, useState } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import {
-  ActiveMissionSection,
   NewMissionSection,
-  RecentMissionsSection,
   ReturningSection,
 } from './components';
 import { theme } from '../../shared/lib/theme';
 import { ActiveMissionModel, GiverHomeState } from './useGiverHomeState';
+import { NewsPills } from '../../components/pills/NewsPills';
+import { EmptyMissionPlaceholderCard } from '../../components/cards/EmptyMissionPlaceholderCard';
+import { CalendarPillsV2 } from '../../components/pills/CalendarPillsV2';
+import { TetrisGrid } from '../../components/grids/TetrisGrid';
+import { Text } from '../../shared/ui/Text';
+import { a11yButtonProps, HITSLOP_44 } from '../../shared/lib/a11y';
+import { ActiveMissionCard } from '../../components/cards/ActiveMissionCard';
 
 export type HomeGiverSectionProps = {
   state: GiverHomeState;
@@ -18,7 +23,6 @@ export type HomeGiverSectionProps = {
   onOpenChat: (missionId: string) => void;
   onViewAllActive: () => void;
   onOpenExamples: () => void;
-  onLongPressRecent: (missionId: string) => void;
 };
 
 export const HomeGiverSection: React.FC<HomeGiverSectionProps> = ({
@@ -29,7 +33,6 @@ export const HomeGiverSection: React.FC<HomeGiverSectionProps> = ({
   onOpenChat,
   onViewAllActive,
   onOpenExamples,
-  onLongPressRecent,
 }) => {
   const handleCreateMission = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => undefined);
@@ -44,60 +47,165 @@ export const HomeGiverSection: React.FC<HomeGiverSectionProps> = ({
     [onOpenRecentMission],
   );
 
-  const handleLongPressRecent = useCallback(
-    (missionId: string) => {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => undefined);
-      onLongPressRecent(missionId);
-    },
-    [onLongPressRecent],
-  );
+  const [selectedDate, setSelectedDate] = useState(new Date());
 
-  const activeMission = state.kind === 'active' ? state.activeMission : null;
-  const activeMissionId = activeMission?.id;
+  const recentMissions =
+    state.kind === 'active' || state.kind === 'recent' ? state.recentMissions : [];
+
+  type MissionSelectorState = GiverHomeState & {
+    selectMissionsByDate?: (date: Date) => unknown[];
+    selectActiveMissionByDate?: (date: Date) => ActiveMissionModel | null | undefined;
+  };
+
+  const missionSelectorState = state as MissionSelectorState;
+  const { selectMissionsByDate, selectActiveMissionByDate } = missionSelectorState;
+
+  const missionsForSelectedDate = useMemo<unknown[]>(() => {
+    if (typeof selectMissionsByDate === 'function') {
+      const result = selectMissionsByDate(selectedDate);
+      return Array.isArray(result) ? result : [];
+    }
+
+    if (state.kind === 'active' || state.kind === 'recent') {
+      return state.recentMissions;
+    }
+
+    return [];
+  }, [selectMissionsByDate, selectedDate, state]);
+
+  const activeMissionForSelectedDate = useMemo<ActiveMissionModel | null>(() => {
+    if (typeof selectActiveMissionByDate === 'function') {
+      return selectActiveMissionByDate(selectedDate) ?? null;
+    }
+
+    return state.kind === 'active' ? state.activeMission : null;
+  }, [selectActiveMissionByDate, selectedDate, state]);
+
+  const hasAnyMissionsForSelectedDate = missionsForSelectedDate.length > 0;
 
   const handlePressActiveMission = useCallback(() => {
-    if (!activeMissionId) {
+    if (!activeMissionForSelectedDate) {
       return;
     }
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => undefined);
-    if (activeMission) {
-      onOpenActiveMission(activeMission);
-    }
-  }, [activeMission, activeMissionId, onOpenActiveMission]);
+    onOpenActiveMission(activeMissionForSelectedDate);
+  }, [activeMissionForSelectedDate, onOpenActiveMission]);
 
   const handlePressActiveChat = useCallback(() => {
-    if (!activeMissionId) {
+    if (!activeMissionForSelectedDate) {
       return;
     }
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => undefined);
-    onOpenChat(activeMissionId);
-  }, [activeMissionId, onOpenChat]);
+    onOpenChat(activeMissionForSelectedDate.id);
+  }, [activeMissionForSelectedDate, onOpenChat]);
 
   const handleViewAllActive = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => undefined);
     onViewAllActive();
   }, [onViewAllActive]);
 
+  const handleOpenExamplesPress = useCallback(() => {
+    onOpenExamples();
+  }, [onOpenExamples]);
+
+  const handleOpenLatestMission = useCallback(() => {
+    const latest = recentMissions[0];
+    if (!latest) {
+      return;
+    }
+    handlePressRecentMission(latest.id);
+  }, [handlePressRecentMission, recentMissions]);
+
+  const handleOpenSuggestions = useCallback(() => {
+    if (state.kind === 'new') {
+      handleCreateMission();
+      return;
+    }
+    onOpenExamples();
+  }, [handleCreateMission, onOpenExamples, state.kind]);
+
+  const newsItems = useMemo(
+    () => [
+      { id: 'news-1', title: 'Aggiornamento app', onPress: handleOpenExamplesPress },
+      { id: 'news-2', title: 'Statistiche settimanali', onPress: handleViewAllActive },
+      { id: 'news-3', title: 'Crea una nuova missione', onPress: handleCreateMission },
+    ],
+    [handleCreateMission, handleOpenExamplesPress, handleViewAllActive],
+  );
+
+  const selectHomeSectionsByDate = useCallback(
+    (date: Date) => {
+      const dayIndex = date.getDate();
+      const isEvenDay = dayIndex % 2 === 0;
+
+      return [
+        { id: 'grid-1', title: 'Tutorial', kind: 'large' as const, onPress: handleOpenExamplesPress },
+        { id: 'grid-2', title: 'Statistiche', kind: 'small' as const, onPress: handleViewAllActive },
+        { id: 'grid-3', title: 'Missioni recenti', kind: 'small' as const, onPress: handleOpenLatestMission },
+        {
+          id: 'grid-4',
+          title: isEvenDay ? 'Consigliati oggi' : 'Suggeriti per te',
+          kind: 'medium' as const,
+          onPress: handleOpenSuggestions,
+        },
+      ];
+    },
+    [handleOpenExamplesPress, handleOpenLatestMission, handleOpenSuggestions, handleViewAllActive],
+  );
+
+  const gridItems = useMemo(
+    () => selectHomeSectionsByDate(selectedDate),
+    [selectHomeSectionsByDate, selectedDate],
+  );
+
+  const handleChangeCalendar = useCallback((date: Date) => {
+    setSelectedDate(date);
+  }, []);
+
   return (
     <View style={styles.container}>
-      {activeMission ? (
-        <ActiveMissionSection
-          mission={activeMission}
-          onPressMission={handlePressActiveMission}
-          onPressChat={handlePressActiveChat}
-          onPressViewAll={handleViewAllActive}
-        />
-      ) : null}
+      <NewsPills items={newsItems} />
 
-      {state.kind === 'active' || state.kind === 'recent' ? (
-        <RecentMissionsSection
-          missions={state.recentMissions}
-          stats={state.stats}
-          suggestion={state.suggestion}
-          onPressMission={handlePressRecentMission}
-          onLongPressMission={handleLongPressRecent}
-        />
-      ) : null}
+      <CalendarPillsV2
+        selectedDate={selectedDate}
+        onChange={handleChangeCalendar}
+        rightAccessory={
+          <Pressable
+            {...a11yButtonProps('Visualizza tutte')}
+            hitSlop={HITSLOP_44}
+            onPress={handleViewAllActive}
+          >
+            <Text variant="xs" weight="medium" style={styles.viewAllLabel}>
+              Visualizza tutte →
+            </Text>
+          </Pressable>
+        }
+      />
+
+      {!hasAnyMissionsForSelectedDate ? (
+        <EmptyMissionPlaceholderCard onCreate={handleCreateMission} />
+      ) : (
+        <View style={styles.dayContent}>
+          {activeMissionForSelectedDate ? (
+            <ActiveMissionCard
+              etaLabel={activeMissionForSelectedDate.etaLabel}
+              etaSubLabel={activeMissionForSelectedDate.etaSubLabel}
+              etaTone={activeMissionForSelectedDate.etaTone}
+              statusLabel={activeMissionForSelectedDate.statusLabel}
+              statusTone={activeMissionForSelectedDate.statusTone}
+              title={activeMissionForSelectedDate.doerName}
+              subtitle={activeMissionForSelectedDate.doerSummary}
+              progress={activeMissionForSelectedDate.progress}
+              progressLabel={activeMissionForSelectedDate.progressLabel}
+              avatarInitials={activeMissionForSelectedDate.doerAvatarInitials}
+              onPress={handlePressActiveMission}
+              onPressChat={handlePressActiveChat}
+            />
+          ) : null}
+
+          <TetrisGrid items={gridItems} />
+        </View>
+      )}
 
       {state.kind === 'returning' ? (
         <ReturningSection exampleMission={state.exampleMission} suggestion={state.suggestion} />
@@ -117,5 +225,11 @@ export const HomeGiverSection: React.FC<HomeGiverSectionProps> = ({
 const styles = StyleSheet.create({
   container: {
     gap: theme.space.lg,
+  },
+  viewAllLabel: {
+    color: theme.colors.primary,
+  },
+  dayContent: {
+    gap: theme.space.md,
   },
 });
