@@ -85,13 +85,13 @@ const styles = StyleSheet.create({
     height: circleSize,
     borderRadius: theme.radius.full,
     borderWidth: borderThickness,
-    borderColor: theme.colors.borderMuted,
+    borderColor: theme.colors.border,
     borderStyle: 'dashed',
     alignItems: 'center',
     justifyContent: 'center',
   },
   plus: {
-    color: theme.colors.textSubtle,
+    color: theme.colors.border,
   },
   title: {
     color: theme.colors.textSecondary,
