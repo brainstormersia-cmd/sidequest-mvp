@@ -1,0 +1,40 @@
+version: 1
+project: sidequest-mvp
+
+defaults:
+  language: it
+  quality_gate_command: npm run test:local
+  docs_required:
+    - README.md
+    - CHANGELOG.md
+
+agents:
+  planner:
+    role: "Analizza task e spezza in milestone"
+    output: "Piano tecnico con dipendenze"
+  implementer:
+    role: "Implementa feature e refactor"
+    output: "Patch + note di compatibilità"
+  validator:
+    role: "Esegue check locali e smoke test"
+    output: "Report test con comandi"
+  docs_writer:
+    role: "Aggiorna README e documentazione"
+    output: "Diff documentale e runbook"
+
+handoff:
+  template: ai/contracts/agent-handoff-template.md
+  required_sections:
+    - contesto
+    - modifiche
+    - test_eseguiti
+    - rischi_residui
+    - prossime_attivita
+
+task_routing:
+  - match: "src/features/**"
+    preferred_agents: [planner, implementer, validator]
+  - match: "scripts/**"
+    preferred_agents: [implementer, validator, docs_writer]
+  - match: "README.md"
+    preferred_agents: [docs_writer, validator]
